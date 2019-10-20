@@ -24,7 +24,6 @@ app.use(bodyParser.urlencoded({
 
 // middleware for user
 app.use(async (req, res, next) => {
-  console.log(req.body)
   const user = await client.database.collection('users').findOne({ uid: req.headers.user || req.query.user })
   if (!user) return res.json({ error: 'Invalid user' })
   delete user._id
