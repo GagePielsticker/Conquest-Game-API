@@ -20,8 +20,8 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
 
 // get and use routers
-app.use('/api', require('./routes/tiles.js')(client))
-app.use('/api', require('./routes/users.js')(client))
+app.use('/api/tiles', require('./routes/tiles.js')(client))
+app.use('/api/users', require('./routes/users.js')(client))
 
 // catch 404 and forward to error handler
 app.use((req, res, next) => next(createError(404)))
@@ -31,6 +31,13 @@ app.use((err, req, res, next) => {
   res.locals.message = err.message
   res.status(err.status)
   res.send('error')
+})
+
+app.use(async (req, res, next) => {
+  const user = client.database.collection('users').findOne({ uid: req.headers.user })
+  if (!user) return res.json({ error: 'Invalid user' })
+  req.user = user
+  next()
 })
 
 module.exports = app
