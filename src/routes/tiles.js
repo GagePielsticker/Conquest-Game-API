@@ -2,10 +2,17 @@ const express = require('express')
 const router = express.Router()
 
 module.exports = client => {
-  router.get('/tiles/:xPos/:yPos', (req, res) => {
+  router.use('/tiles/:xPos/:yPos', (req, res, next) => {
     client.game.getTile(Number(req.params.xPos), Number(req.params.yPos))
-      .then(tile => res.json(tile))
+      .then(tile => {
+        req.tile = tile
+        next()
+      })
       .catch(e => res.json({ error: e }))
+  })
+
+  router.get('/tiles/:xPos/:yPos', (req, res) => {
+    res.json(req.tile)
   })
 
   return router
