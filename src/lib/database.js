@@ -1,12 +1,12 @@
 module.exports = client => {
   /**
-       * Dependencies
-       */
+   * Dependencies
+   */
   const MongoClient = require('mongodb').MongoClient
 
   /**
-       * Connects mongoDB Database and appends it on client.db
-       */
+   * Connects mongoDB Database and appends it on client.db
+   */
   client.connectDb = () => {
     return new Promise((resolve, reject) => {
       const { host, port, database, username, password } = client.settings.database
