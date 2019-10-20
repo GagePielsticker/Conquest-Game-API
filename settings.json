@@ -1,0 +1,17 @@
+{
+    "database": {
+        "host": "127.0.0.1",
+        "port": "27017",
+        "database": "conquest-dev",
+        "username": "",
+        "password": ""
+    },
+    "game" : {
+        "map" : {
+            "xMax" : 2000,
+            "xMin" : 0,
+            "yMax" : 2000,
+            "yMin" : 0
+        }
+    }
+}
