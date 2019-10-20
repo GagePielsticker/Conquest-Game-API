@@ -55,6 +55,11 @@ module.exports = client => {
       return client.database.collection('users').insertOne(userObject)
     },
 
+    /**
+     * Gets a tiles information
+     * @param {Integer} xPos Position on map grid
+     * @param {Integer} yPos Position on map grid
+     */
     getTile: async (xPos, yPos) => {
       let city = await client.database.collection('cities').findOne({ xPos: xPos, yPos: yPos })
       const base = {

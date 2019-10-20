@@ -2,7 +2,6 @@
 const createError = require('http-errors')
 const express = require('express')
 const logger = require('morgan')
-const fs = require('fs')
 const client = {
   settings: require('./settings/settings.json')
 }
