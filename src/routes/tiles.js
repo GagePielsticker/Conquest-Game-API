@@ -15,5 +15,14 @@ module.exports = client => {
     res.json(req.tile)
   })
 
+  router.post('/:xPos/:yPos', (req, res) => {
+    if (!req.body.name) return res.json({ error: 'Missing name' })
+    client.game.settleLocation(req.user.uid, req.body.name)
+      .then(city => {
+        res.json(city)
+      })
+      .catch(e => res.json({ error: e }))
+  })
+
   return router
 }

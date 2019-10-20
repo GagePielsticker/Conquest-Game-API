@@ -2,6 +2,7 @@
 const createError = require('http-errors')
 const express = require('express')
 const logger = require('morgan')
+const bodyParser = require('body-parser')
 const client = {
   settings: require('./settings/settings.json')
 }
@@ -16,8 +17,20 @@ client.connectDb()
 
 // middleware setup
 app.use(logger('common'))
-app.use(express.json())
-app.use(express.urlencoded({ extended: false }))
+app.use(bodyParser.json())
+app.use(bodyParser.urlencoded({
+  extended: true
+}))
+
+// middleware for user
+app.use(async (req, res, next) => {
+  console.log(req.body)
+  const user = await client.database.collection('users').findOne({ uid: req.headers.user || req.query.user })
+  if (!user) return res.json({ error: 'Invalid user' })
+  delete user._id
+  req.user = user
+  next()
+})
 
 // get and use routers
 app.use('/api/tiles', require('./routes/tiles.js')(client))
@@ -31,13 +44,6 @@ app.use((err, req, res, next) => {
   res.locals.message = err.message
   res.status(err.status)
   res.send('error')
-})
-
-app.use(async (req, res, next) => {
-  const user = client.database.collection('users').findOne({ uid: req.headers.user })
-  if (!user) return res.json({ error: 'Invalid user' })
-  req.user = user
-  next()
 })
 
 module.exports = app

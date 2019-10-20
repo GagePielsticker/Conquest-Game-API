@@ -293,7 +293,7 @@ module.exports = client => {
       await client.database.collection('users').updateOne({ uid: uid }, { $set: { hasSettler: false } })
 
       // resolve on completion
-      return Promise.resolve()
+      return cityObject
     },
 
     /**

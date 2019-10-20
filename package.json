@@ -5,6 +5,7 @@
     "start": "node ./src/bin/www"
   },
   "dependencies": {
+    "body-parser": "^1.19.0",
     "debug": "~2.6.9",
     "ejs": "^2.6.2",
     "express": "~4.16.1",
