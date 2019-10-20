@@ -2,6 +2,7 @@
 const createError = require('http-errors')
 const express = require('express')
 const logger = require('morgan')
+const fs = require('fs')
 const client = {
   settings: require('./settings/settings.json')
 }
@@ -20,8 +21,8 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
 
 // get and use routers
-app.use('/api', require('./routes/users.js')(client))
 app.use('/api', require('./routes/tiles.js')(client))
+app.use('/api', require('./routes/users.js')(client))
 
 // catch 404 and forward to error handler
 app.use((req, res, next) => next(createError(404)))
