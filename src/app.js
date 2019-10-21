@@ -31,6 +31,9 @@ app.put('/api/users/:user', async (req, res) => {
     .catch(e => res.json({ error: e }))
 })
 
+// routers not requiring user
+app.use('/api/tiles', require('./routes/tiles.js')(client))
+
 // middleware for user
 app.use(async (req, res, next) => {
   const user = await client.database.collection('users').findOne({ uid: req.headers.user || req.query.user })
@@ -40,10 +43,9 @@ app.use(async (req, res, next) => {
   next()
 })
 
-// get and use routers
-app.use('/api/tiles', require('./routes/tiles.js')(client))
-app.use('/api/cities', require('./routes/cities.js')(client))
+// routers requiring user
 app.use('/api/users', require('./routes/users.js')(client))
+app.use('/api/cities', require('./routes/cities.js')(client))
 app.use('/api/alliances', require('./routes/alliances.js')(client))
 
 // catch 404 and forward to error handler
