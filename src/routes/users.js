@@ -73,6 +73,13 @@ module.exports = client => {
       .catch(e => res.json({ error: e }))
   })
 
+  router.get('/:user/move', (req, res) => {
+    const movement = client.game.movementCooldown.get(req.user.uid)
+    if (!movement) return res.json({ moving: false, data: null })
+    delete movement.interval
+    res.json({ moving: true, data: movement })
+  })
+
   /**
    * Stop user movement
    * @param {Snowflake} user User's Discord ID
