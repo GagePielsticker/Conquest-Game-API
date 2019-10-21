@@ -15,5 +15,11 @@ module.exports = client => {
     res.json(req.tile)
   })
 
+  router.get('/:xPos/:yPos/time/:xPos2/:yPos2', (req, res) => {
+    client.game.calculateTravelTime(req.tile.xPos, req.tile.yPos, Number(req.params.xPos2), Number(req.params.yPos2))
+      .then(time => { res.json({ time: time }) })
+      .catch(e => res.json({ error: e }))
+  })
+
   return router
 }

@@ -2,6 +2,23 @@ const express = require('express')
 const router = express.Router()
 
 module.exports = client => {
+  /**
+   * Calculate how much to level up a city
+   * @param {Integer} currentLevel Current level of the city
+   * @returns {Object<cost: Integer>}
+   */
+  router.get('/cost/:currentLevel', (req, res) => {
+    client.game.calculateLevelCost(Number(req.params.currentLevel))
+      .then(cost => { res.json({ cost: cost }) })
+      .catch(e => res.json({ error: e }))
+  })
+
+  router.get('/maxpop/:currentLevel', (req, res) => {
+    client.game.calculateLevelCost(Number(req.params.currentLevel))
+      .then(max => { res.json({ max: max }) })
+      .catch(e => res.json({ error: e }))
+  })
+
   router.use('/:xPos/:yPos', (req, res, next) => {
     client.game.getTile(Number(req.params.xPos), Number(req.params.yPos))
       .then(tile => {

@@ -38,6 +38,16 @@ module.exports = client => {
       .catch(e => res.json({ error: e }))
   })
 
+  router.get('/:user/cities/names', (req, res) => {
+    let page = req.query.page
+    if (!page) page = 1
+    page = Number(page)
+
+    client.game.getUserCityNames(req.ruser.uid, page)
+      .then(response => { res.json({ cities: response.cities, totalPages: response.totalPages }) })
+      .catch(e => res.json({ error: e }))
+  })
+
   /**
    * Creates a new city
    * @param {Snowflake} :user User's Discord ID
