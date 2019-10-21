@@ -347,7 +347,6 @@ module.exports = client => {
     */
     setCityName: async (xPos, yPos, name) => {
       // rename city on map and write both to database
-	  console.log(name)
       await client.database.collection('cities').updateOne({ xPos: xPos, yPos: yPos }, { $set: { name: name } })
 
       // resolve
