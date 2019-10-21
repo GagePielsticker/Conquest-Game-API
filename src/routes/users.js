@@ -61,6 +61,7 @@ module.exports = client => {
   router.post('/:user/move/:xPos/:yPos', (req, res) => {
     const xPos = Number(req.params.xPos)
     const yPos = Number(req.params.yPos)
+    console.log(xPos, yPos, req.ruser.uid)
     client.game.moveUser(req.ruser.uid, xPos, yPos)
       .then(time => res.json({ time: time }))
       .catch(e => res.json({ error: e }))
@@ -82,13 +83,11 @@ module.exports = client => {
   /**
    * Scout Tile
    * @param {Snowflake} user User's Discord ID
-   * @param {Integer} xPos New X coordinate
-   * @param {Integer} yPos New Y coordinate
    * @returns {Object}
    * @returns {Object.time} Time required to scout the tile
    * @returns {Object.mapEntry} Tile information
    */
-  router.post('/:user/scout/:xPos/:yPos', (req, res) => {
+  router.post('/:user/scout', (req, res) => {
     client.game.scoutTile(req.ruser.uid)
       .then((response) => res.json(response))
       .catch(e => res.json({ error: e }))
@@ -140,7 +139,10 @@ module.exports = client => {
    */
   router.get('/:user/alliance', (req, res) => {
     client.game.getAlliance(req.ruser.uid)
-      .then(alliance => { res.json(alliance) })
+      .then(alliance => { 
+        if (!alliance) res.json({ error: 'User is not in alliance' })
+        res.json(alliance) 
+      })
       .catch(e => res.json({ error: e }))
   })
   
@@ -151,7 +153,7 @@ module.exports = client => {
    */
   router.delete('/:user/alliance', (req, res) => {
     client.game.getAlliance(req.ruser.uid)
-      .then(alliance => { res.json({success: true}) })
+      .then(() => { res.json({success: true}) })
       .catch(e => res.json({ error: e }))
   })
 

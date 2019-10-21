@@ -167,7 +167,7 @@ module.exports = client => {
       const userEntry = await client.database.collection('users').findOne({ uid: uid })
       if (userEntry == null) return Promise.reject('User does not exist in database.')
 
-      if (xPos === userEntry.xOis && yPos === userEntry.yPos) return Promise.reject('Already in this location')
+      if (xPos === userEntry.xPos && yPos === userEntry.yPos) return Promise.reject('Already in this location')
 
       // check if tile exist
       const entry = await client.game.getTile(xPos, yPos)
@@ -980,7 +980,6 @@ module.exports = client => {
           }
         ]
       })
-      if (allianceEntry == null) return Promise.reject('User not in an alliance.')
 
       // resolve the object
       return Promise.resolve(allianceEntry)
