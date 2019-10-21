@@ -564,10 +564,13 @@ module.exports = client => {
         client.game.scoutCooldown.delete(uid)
       }, time)
 
+      const allianceEntry = await client.game.getAlliance(uid)
+
       // resolve cooldown time and map entry
       return Promise.resolve({
         time: time,
-        mapEntry: mapEntry
+        mapEntry: mapEntry,
+        alliance: allianceEntry
       })
     },
 
