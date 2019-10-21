@@ -4,8 +4,8 @@ module.exports = client => {
   // get needed libraries
   const moment = require('moment')
   const nameGenerator = require('project-name-generator')
-  const EasyStar = require('easystarjs')
-  const easystar = new EasyStar.js() // eslint-disable-line new-cap
+  const PF = require('pathfinding')
+  const finder = new PF.AStarFinder()
   const SeedRandom = require('seedrandom')
 
   /** @namespace */
@@ -181,11 +181,7 @@ module.exports = client => {
       if (yPos > client.settings.game.map.yMax || yPos < client.settings.game.map.yMin) return Promise.reject('Invalid location.')
 
       // calculate distance to target
-      const path = await (() => {
-        return new Promise(resolve => {
-          easystar.findPath(userEntry.xPos, userEntry.yPos, xPos, yPos, (e) => { resolve(e) })
-        })
-      })()
+      const path = finder.findPath(userEntry.xPos, userEntry.yPos, xPos, yPos, new PF.Grid(2000, 2000))
 
       // calculate travel time to target and get tiles to target
       const travelTime = await client.game.calculateTravelTime(userEntry.xPos, userEntry.yPos, xPos, yPos)
@@ -206,7 +202,7 @@ module.exports = client => {
           clearInterval(movementInterval)
           return client.game.stopUser(uid)
         }
-        client.database.collection('users').updateOne({ uid: uid }, { $set: { xPos: path[i].x, yPos: path[i].y } })
+        client.database.collection('users').updateOne({ uid: uid }, { $set: { xPos: path[i][0], yPos: path[i][1] } })
         i++
       }, timePerCycle)
 

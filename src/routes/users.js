@@ -68,7 +68,6 @@ module.exports = client => {
   router.post('/:user/move/:xPos/:yPos', (req, res) => {
     const xPos = Number(req.params.xPos)
     const yPos = Number(req.params.yPos)
-    console.log(xPos, yPos, req.user.uid)
     client.game.moveUser(req.user.uid, xPos, yPos)
       .then(time => res.json({ time: time }))
       .catch(e => res.json({ error: e }))
