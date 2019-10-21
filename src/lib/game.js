@@ -135,7 +135,6 @@ module.exports = client => {
     stopUser: async (uid) => {
       // check if user exist
       const userEntry = await client.database.collection('users').findOne({ uid: uid })
-      if (userEntry == null) return Promise.reject('User does not exist in database.')
 
       // get the collection
       const collection = await client.game.movementCooldown.get(uid)
@@ -165,7 +164,6 @@ module.exports = client => {
     moveUser: async (uid, xPos, yPos) => {
       // check if user exist
       const userEntry = await client.database.collection('users').findOne({ uid: uid })
-      if (userEntry == null) return Promise.reject('User does not exist in database.')
 
       if (xPos === userEntry.xPos && yPos === userEntry.yPos) return Promise.reject('Already in this location')
 
@@ -254,7 +252,6 @@ module.exports = client => {
     settleLocation: async (uid, name) => {
       // check if user exist
       const userEntry = await client.database.collection('users').findOne({ uid: uid })
-      if (userEntry == null) return Promise.reject('User does not exist in database.')
 
       // check if tile exist
       const entry = await client.game.getTile(userEntry.xPos, userEntry.yPos)
@@ -313,14 +310,6 @@ module.exports = client => {
      * @param {Integer} yPos position map
      */
     destroyCity: async (uid, xPos, yPos) => {
-      // Check user exist in database
-      const userEntry = client.game.database.colection('users').findOne({ uid: uid })
-      if (userEntry == null) return Promise.reject('User does not exist in database.')
-
-      // Check user tile exist in database
-      const mapEntry = client.game.getTile(xPos, yPos)
-      if (!mapEntry.city || !mapEntry.city.owner) return Promise.reject('User does not own city')
-
       // save to database
       await client.database.collection('cities').removeOne({ xPos: xPos, yPos: yPos })
       await client.database.collection('users').updateOne({ uid: uid }, { $set: { hasSettler: true } })
@@ -335,10 +324,6 @@ module.exports = client => {
     * @param {String} url valid image url
     */
     setFlag: async (uid, url) => {
-      // check if user exist
-      const userEntry = await client.database.collection('users').findOne({ uid: uid })
-      if (userEntry == null) return Promise.reject('User does not exist in database.')
-
       // set flag and return
       return client.database.collection('users').updateOne({ uid: uid }, { $set: { flagURL: url } })
     },
@@ -349,10 +334,6 @@ module.exports = client => {
         * @param {String} empireName name of empire
        */
     setEmpireName: async (uid, empireName) => {
-      // check if user exist
-      const userEntry = await client.database.collection('users').findOne({ uid: uid })
-      if (userEntry == null) return Promise.reject('User does not exist in database.')
-
       // set empire name and return
       return client.database.collection('users').updateOne({ uid: uid }, { $set: { empireName: empireName } })
     },
@@ -365,20 +346,6 @@ module.exports = client => {
     * @param {String} name name of city
     */
     setCityName: async (executor, xPos, yPos, name) => {
-      // check if user exist
-      const userEntry = await client.database.collection('users').findOne({ uid: executor })
-      if (userEntry == null) return Promise.reject('User does not exist in database.')
-
-      // check if tile exist
-      const mapEntry = await client.game.getTile(xPos, yPos)
-      if (mapEntry == null) return Promise.reject('Map tile does not exist in database.')
-
-      // check if city exist
-      if (mapEntry.city == null) return Promise.reject('City does not exist on tile.')
-
-      // check if user owns city
-      if (mapEntry.city.owner !== executor) return Promise.reject('User does not own city.')
-
       // rename city on map and write both to database
       await client.database.collection('cities').updateOne({ xPos: xPos, yPos: yPos }, { $set: { name: name } })
 
@@ -420,17 +387,9 @@ module.exports = client => {
     levelCity: async (uid, xPos, yPos) => {
       // check if user exist
       const userEntry = await client.database.collection('users').findOne({ uid: uid })
-      if (userEntry == null) return Promise.reject('User does not exist in database.')
 
       // check if tile exist
       const mapEntry = await client.game.getTile(xPos, yPos)
-      if (mapEntry == null) return Promise.reject('Map tile does not exist in database.')
-
-      // check if city exist
-      if (mapEntry.city == null) return Promise.reject('City does not exist on tile.')
-
-      // check if user own city
-      if (mapEntry.city.owner !== uid) return Promise.reject('User does not own city.')
 
       // get cost
       const cost = await client.game.calculateLevelCost(mapEntry.city.level)
@@ -468,20 +427,9 @@ module.exports = client => {
      * @param {String} target target work force you want to move original to
      * @param {Integer} amount amount to transition
      */
-    changePopulationJob: async (uid, xPos, yPos, origin, target, amount) => {
-      // check if user exist
-      const userEntry = await client.database.collection('users').findOne({ uid: uid })
-      if (userEntry == null) return Promise.reject('User does not exist in database.')
-
-      // check if tile exist
+    changePopulationJob: async (xPos, yPos, origin, target, amount) => {
+      // get tile
       const mapEntry = await client.game.getTile(xPos, yPos)
-      if (mapEntry == null) return Promise.reject('Map tile does not exist in database.')
-
-      // check if city exist
-      if (mapEntry.city == null) return Promise.reject('City does not exist on tile.')
-
-      // check if user owns city
-      if (mapEntry.city.owner !== uid) return Promise.reject('User does not own city.')
 
       // uniformize job names
       origin = origin.toLowerCase()
@@ -513,7 +461,6 @@ module.exports = client => {
     calculateScoutTime: async (uid) => {
       // check if user exist
       const userEntry = await client.database.collection('users').findOne({ uid: uid })
-      if (userEntry == null) return Promise.reject('User does not exist in database.')
 
       let time
       if (userEntry.scoutedTiles.some(x => x.xPos === userEntry.xPos && x.yPos === userEntry.yPos)) {
@@ -532,7 +479,6 @@ module.exports = client => {
     scoutTile: async (uid) => {
       // check if user exist
       const userEntry = await client.database.collection('users').findOne({ uid: uid })
-      if (userEntry == null) return Promise.reject('User does not exist in database.')
 
       // check if tile exist
       const mapEntry = await client.game.getTile(userEntry.xPos, userEntry.yPos)
@@ -581,7 +527,6 @@ module.exports = client => {
     generateGold: async (uid) => {
       // check if user exist
       const userEntry = await client.database.collection('users').findOne({ uid: uid })
-      if (userEntry == null) return Promise.reject('User does not exist in database.')
 
       const userCities = await client.game.getUserCities(uid)
 
@@ -604,10 +549,6 @@ module.exports = client => {
      * @param {Snowflake} uid Users discord id
      */
     generateFood: async (uid) => {
-      // check if user exist
-      const userEntry = await client.database.collection('users').findOne({ uid: uid })
-      if (userEntry == null) return Promise.reject('User does not exist in database.')
-
       // for each city
       const userCities = await client.game.getUserCities(uid)
       userCities.forEach(async cityEntry => {
@@ -631,10 +572,6 @@ module.exports = client => {
      * @param {Snowflake} uid Users discord id
      */
     generateResource: async (uid) => {
-      // check if user exist
-      const userEntry = await client.database.collection('users').findOne({ uid: uid })
-      if (userEntry == null) return Promise.reject('User does not exist in database.')
-
       const userCities = await client.game.getUserCities(uid)
       userCities.forEach(async cityEntry => {
         // calculate growth of resource
@@ -660,10 +597,6 @@ module.exports = client => {
      * @param {Snowflake} uid Users discord id
      */
     consumeFood: async (uid) => {
-      // check if user exist
-      const userEntry = await client.database.collection('users').findOne({ uid: uid })
-      if (userEntry == null) return Promise.reject('User does not exist in database.')
-
       const userCities = await client.game.getUserCities(uid)
       userCities.forEach(async cityEntry => {
         // get total population
@@ -709,10 +642,6 @@ module.exports = client => {
      * @param {Integer} pageNumber
      */
     getUserCityNames: async (uid, pageNumber) => {
-      // check if user exist
-      const userEntry = await client.database.collection('users').findOne({ uid: uid })
-      if (userEntry == null) return Promise.reject('User does not exist in database.')
-
       const userCities = await client.game.getUserCities(uid)
 
       let i = 0

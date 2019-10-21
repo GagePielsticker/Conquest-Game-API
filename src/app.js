@@ -32,18 +32,18 @@ app.put('/api/users/:user', async (req, res) => {
 })
 
 // routers not requiring user
-app.use('/api/tiles', require('./routes/tiles.js')(client))
 
 // middleware for user
-app.use(async (req, res, next) => {
-  const user = await client.database.collection('users').findOne({ uid: req.headers.user || req.query.user })
-  if (!user) return res.json({ error: 'Invalid user' })
-  delete user._id
-  req.user = user
-  next()
-})
+// app.use(async (req, res, next) => {
+//   const user = await client.database.collection('users').findOne({ uid: req.headers.user || req.query.user })
+//   if (!user) return res.json({ error: 'Invalid user' })
+//   delete user._id
+//   req.user = user
+//   next()
+// })
 
 // routers requiring user
+app.use('/api/tiles', require('./routes/tiles.js')(client))
 app.use('/api/users', require('./routes/users.js')(client))
 app.use('/api/cities', require('./routes/cities.js')(client))
 app.use('/api/alliances', require('./routes/alliances.js')(client))

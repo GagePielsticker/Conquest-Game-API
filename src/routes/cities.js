@@ -19,10 +19,18 @@ module.exports = client => {
       .catch(e => res.json({ error: e }))
   })
 
+  router.use(async (req, res, next) => {
+    const user = await client.database.collection('users').findOne({ uid: req.headers.user })
+    if (!user) return res.json({ error: 'Invalid user' })
+    req.user = user
+    next()
+  })
+
   router.use('/:xPos/:yPos', (req, res, next) => {
     client.game.getTile(Number(req.params.xPos), Number(req.params.yPos))
       .then(tile => {
         if (!tile.city) return res.json({ error: 'No city on this tile' })
+        if (tile.city.owner !== req.user.uid) return res.json({ error: 'User doesn\'t own city' })
         req.city = tile.city
         next()
       })
@@ -34,14 +42,14 @@ module.exports = client => {
   })
 
   router.delete('/:xPos/:yPos', (req, res) => {
-    client.game.destroyCity(req.user.uid, req.city.xPos, req.city.yPos)
+    client.game.destroyCity(req.city.xPos, req.city.yPos)
       .then(() => res.json({ success: true }))
       .catch(e => res.json({ error: e }))
   })
 
   router.post('/:xPos/:yPos/name', (req, res) => {
     if (!req.body.name) return res.json({ error: 'Missing name' })
-    client.game.setCityName(req.user.uid, req.city.xPos, req.city.yPos, req.body.name)
+    client.game.setCityName(req.city.xPos, req.city.yPos, req.body.name)
       .then(() => res.json({ success: true }))
       .catch(e => res.json({ error: e }))
   })
@@ -59,7 +67,7 @@ module.exports = client => {
     if (!amount) return res.json({ error: 'Missing amount' })
 
     amount = Number(amount)
-    client.game.changePopulationJob(req.user.uid, req.city.xPos, req.city.yPos, from, to, amount)
+    client.game.changePopulationJob(req.city.xPos, req.city.yPos, from, to, amount)
       .then(() => res.json({ success: true }))
       .catch(e => res.json({ error: e }))
   })
