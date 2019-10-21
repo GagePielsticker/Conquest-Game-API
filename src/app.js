@@ -22,6 +22,14 @@ app.use(bodyParser.urlencoded({
   extended: true
 }))
 
+app.put('/api/users/:user', async (req, res) => {
+  client.game.createUser(req.params.user)
+    .then(user => {
+      res.json(user)
+    })
+    .catch(e => res.json({ error: e }))
+})
+
 // middleware for user
 app.use(async (req, res, next) => {
   const user = await client.database.collection('users').findOne({ uid: req.headers.user || req.query.user })
@@ -33,7 +41,9 @@ app.use(async (req, res, next) => {
 
 // get and use routers
 app.use('/api/tiles', require('./routes/tiles.js')(client))
+app.use('/api/cities', require('./routes/cities.js')(client))
 app.use('/api/users', require('./routes/users.js')(client))
+app.use('/api/alliances', require('./routes/alliances.js')(client))
 
 // catch 404 and forward to error handler
 app.use((req, res, next) => next(createError(404)))

@@ -1,10 +1,11 @@
+/* eslint-disable prefer-promise-reject-errors */
+
 module.exports = client => {
   // get needed libraries
   const moment = require('moment')
   const nameGenerator = require('project-name-generator')
-  const PF = require('pathfinding')
-  const grid = new PF.Grid(client.settings.game.map.xMax, client.settings.game.map.yMax)
-  const finder = new PF.AStarFinder()
+  const EasyStar = require('easystarjs')
+  const easystar = new EasyStar.js() // eslint-disable-line new-cap
   const SeedRandom = require('seedrandom')
 
   /** @namespace */
@@ -18,12 +19,12 @@ module.exports = client => {
 
     /**
         * Create a database object for the guild
-        * @param {String} uid a discord user id
+        * @param {Snowflake} uid a discord user id
        */
     createUser: async (uid) => {
       // check if user exist
       const userEntry = await client.database.collection('users').findOne({ uid: uid })
-      if (userEntry != null) return Promise.reject('User exist in database.') // eslint-disable-line prefer-promise-reject-errors
+      if (userEntry != null) return Promise.reject('User exist in database.')
 
       // calculate spawn position
       let xPos
@@ -52,7 +53,9 @@ module.exports = client => {
       }
 
       // write object to database
-      return client.database.collection('users').insertOne(userObject)
+      client.database.collection('users').insertOne(userObject)
+
+      return userObject
     },
 
     /**
@@ -118,7 +121,7 @@ module.exports = client => {
 
     /**
        * Gets all users tiles
-       * @param {String} uid User's ID
+       * @param {Snowflake} uid User's ID
        * @returns {Array<City>} Array of cities this user owns
        */
     getUserCities: async (uid) => {
@@ -126,19 +129,19 @@ module.exports = client => {
     },
 
     /**
-        * Moves user to location
-        * @param {String} uid a discord user id
-        */
+    * Moves user to location
+    * @param {Snowflake} uid a discord user id
+    */
     stopUser: async (uid) => {
       // check if user exist
       const userEntry = await client.database.collection('users').findOne({ uid: uid })
-      if (userEntry == null) return Promise.reject('User does not exist in database.') // eslint-disable-line prefer-promise-reject-errors
+      if (userEntry == null) return Promise.reject('User does not exist in database.')
 
       // get the collection
       const collection = await client.game.movementCooldown.get(uid)
 
       // does user have collection map
-      if (!collection) return Promise.reject('User is not travelling.') // eslint-disable-line prefer-promise-reject-errors
+      if (!collection) return Promise.reject('User is not travelling.')
 
       // clear interval
       clearInterval(collection.interval)
@@ -154,33 +157,38 @@ module.exports = client => {
     },
 
     /**
-        * Moves user to location
-        * @param {String} uid a discord user id
-        * @param {Integer} xPos position on map grid
-        * @param {Integer} yPos position on map grid
-       */
+    * Moves user to location
+    * @param {Snowflake} uid a discord user id
+    * @param {Integer} xPos position on map grid
+    * @param {Integer} yPos position on map grid
+    */
     moveUser: async (uid, xPos, yPos) => {
       // check if user exist
       const userEntry = await client.database.collection('users').findOne({ uid: uid })
-      if (userEntry == null) return Promise.reject('User does not exist in database.') // eslint-disable-line prefer-promise-reject-errors
+      if (userEntry == null) return Promise.reject('User does not exist in database.')
 
-      if (xPos === userEntry.xOis && yPos === userEntry.yPos) return Promise.reject('Already in this location') // eslint-disable-line prefer-promise-reject-errors
+      if (xPos === userEntry.xOis && yPos === userEntry.yPos) return Promise.reject('Already in this location')
 
       // check if tile exist
       const entry = await client.game.getTile(xPos, yPos)
 
       // check if movelock is set
-      if (entry.hasLock) return Promise.reject('That land has a natural barrier.') // eslint-disable-line prefer-promise-reject-errors
+      if (entry.hasLock) return Promise.reject('That land has a natural barrier.')
 
       // check if user is in cooldown
-      if (client.game.movementCooldown.has(uid)) return Promise.reject('User is currently Travelling.') // eslint-disable-line prefer-promise-reject-errors
+      if (client.game.movementCooldown.has(uid)) return Promise.reject('User is currently Travelling.')
 
       // check to make sure target is in bounds
-      if (xPos > client.settings.game.map.xMax || xPos < client.settings.game.map.xMin) return Promise.reject('Invalid location.') // eslint-disable-line prefer-promise-reject-errors
-      if (yPos > client.settings.game.map.yMax || yPos < client.settings.game.map.yMin) return Promise.reject('Invalid location.') // eslint-disable-line prefer-promise-reject-errors
+      if (xPos > client.settings.game.map.xMax || xPos < client.settings.game.map.xMin) return Promise.reject('Invalid location.')
+      if (yPos > client.settings.game.map.yMax || yPos < client.settings.game.map.yMin) return Promise.reject('Invalid location.')
 
       // calculate distance to target
-      const path = finder.findPath(userEntry.xPos, userEntry.yPos, xPos, yPos, grid)
+      const path = await (() => {
+        return new Promise(resolve => {
+          easystar.findPath(userEntry.xPos, userEntry.yPos, xPos, yPos, (e) => { resolve(e) })
+        })
+      })()
+
       // calculate travel time to target and get tiles to target
       const travelTime = await client.game.calculateTravelTime(userEntry.xPos, userEntry.yPos, xPos, yPos)
       const travelTiles = path.length || 1
@@ -200,7 +208,7 @@ module.exports = client => {
           clearInterval(movementInterval)
           return client.game.stopUser(uid)
         }
-        client.database.collection('users').updateOne({ uid: uid }, { $set: { xPos: path[i][0], yPos: path[i][1] } })
+        client.database.collection('users').updateOne({ uid: uid }, { $set: { xPos: path[i].x, yPos: path[i].y } })
         i++
       }, timePerCycle)
 
@@ -217,13 +225,13 @@ module.exports = client => {
     },
 
     /**
-        * Calculates travel time
-        * @param {Integer} x1 position on map grid
-        * @param {Integer} y1 position on map grid
-        * @param {Integer} x2 position on map grid
-        * @param {Integer} y2 position on map grid
-        * @returns {Integer} in ms
-       */
+    * Calculates travel time
+    * @param {Integer} x1 position on map grid
+    * @param {Integer} y1 position on map grid
+    * @param {Integer} x2 position on map grid
+    * @param {Integer} y2 position on map grid
+    * @returns {Integer} in ms
+    */
     calculateTravelTime: async (x1, y1, x2, y2) => {
       // distance formula from user to target
       const a = x1 - x2
@@ -238,26 +246,28 @@ module.exports = client => {
     },
 
     /**
-        * Settles location of player if settler available
-        * @param {String} uid a discord user id
-       */
+    * Settles location of player if settler available
+    * @param {Snowflake} uid User Discord ID
+    * @param {String} name City name
+    * @returns {City} City object
+    */
     settleLocation: async (uid, name) => {
       // check if user exist
       const userEntry = await client.database.collection('users').findOne({ uid: uid })
-      if (userEntry == null) return Promise.reject('User does not exist in database.') // eslint-disable-line prefer-promise-reject-errors
+      if (userEntry == null) return Promise.reject('User does not exist in database.')
 
       // check if tile exist
       const entry = await client.game.getTile(userEntry.xPos, userEntry.yPos)
 
       // check if city exist on tile
-      if (entry.city != null) return Promise.reject('City exist on tile already.') // eslint-disable-line prefer-promise-reject-errors
+      if (entry.city != null) return Promise.reject('City exist on tile already.')
 
       // check if user has settler available
-      if (!userEntry.hasSettler) return Promise.reject('User does not have available settler.') // eslint-disable-line prefer-promise-reject-errors
+      if (!userEntry.hasSettler) return Promise.reject('User does not have available settler.')
 
       // check to make sure user doesnt already have a place named that
       const userCities = await client.game.getUserCities(uid)
-      if (userCities.some(x => x.name === name)) return Promise.reject('User has a city named this already.') // eslint-disable-line prefer-promise-reject-errors
+      if (userCities.some(x => x.name === name)) return Promise.reject('User has a city named this already.')
 
       const cityObject = {
         level: 1,
@@ -297,14 +307,37 @@ module.exports = client => {
     },
 
     /**
-        * Sets the flag of a user
-        * @param {String} uid a discord user id
-        * @param {String} url valid image url
-       */
+     * Removes a users city - jpb sucks at documentation
+     * @param {Snowflake} uid Discord id
+     * @param {Integer} xPos position map
+     * @param {Integer} yPos position map
+     */
+    destroyCity: async (uid, xPos, yPos) => {
+      // Check user exist in database
+      const userEntry = client.game.database.colection('users').findOne({ uid: uid })
+      if (userEntry == null) return Promise.reject('User does not exist in database.')
+
+      // Check user tile exist in database
+      const mapEntry = client.game.getTile(xPos, yPos)
+      if (!mapEntry.city || !mapEntry.city.owner) return Promise.reject('User does not own city')
+
+      // save to database
+      await client.database.collection('cities').removeOne({ xPos: xPos, yPos: yPos })
+      await client.database.collection('users').updateOne({ uid: uid }, { $set: { hasSettler: true } })
+
+      // resolve
+      return Promise.resolve()
+    },
+
+    /**
+    * Sets the flag of a user
+    * @param {Snowflake} uid a discord user id
+    * @param {String} url valid image url
+    */
     setFlag: async (uid, url) => {
       // check if user exist
       const userEntry = await client.database.collection('users').findOne({ uid: uid })
-      if (userEntry == null) return Promise.reject('User does not exist in database.') // eslint-disable-line prefer-promise-reject-errors
+      if (userEntry == null) return Promise.reject('User does not exist in database.')
 
       // set flag and return
       return client.database.collection('users').updateOne({ uid: uid }, { $set: { flagURL: url } })
@@ -312,39 +345,39 @@ module.exports = client => {
 
     /**
         * sets empire name
-        * @param {String} uid a discord user id
+        * @param {Snowflake} uid a discord user id
         * @param {String} empireName name of empire
        */
     setEmpireName: async (uid, empireName) => {
       // check if user exist
       const userEntry = await client.database.collection('users').findOne({ uid: uid })
-      if (userEntry == null) return Promise.reject('User does not exist in database.') // eslint-disable-line prefer-promise-reject-errors
+      if (userEntry == null) return Promise.reject('User does not exist in database.')
 
       // set empire name and return
       return client.database.collection('users').updateOne({ uid: uid }, { $set: { empireName: empireName } })
     },
 
     /**
-        * Changes tiles cities name
-        * @param {String} executor a discord user id of who executed
-        * @param {Integer} xPos position on map grid
-        * @param {Integer} yPos position on map grid
-        * @param {String} name name of city
-       */
+    * Changes tiles cities name
+    * @param {Snowflake} executor a discord user id of who executed
+    * @param {Integer} xPos position on map grid
+    * @param {Integer} yPos position on map grid
+    * @param {String} name name of city
+    */
     setCityName: async (executor, xPos, yPos, name) => {
       // check if user exist
       const userEntry = await client.database.collection('users').findOne({ uid: executor })
-      if (userEntry == null) return Promise.reject('User does not exist in database.') // eslint-disable-line prefer-promise-reject-errors
+      if (userEntry == null) return Promise.reject('User does not exist in database.')
 
       // check if tile exist
       const mapEntry = await client.game.getTile(xPos, yPos)
-      if (mapEntry == null) return Promise.reject('Map tile does not exist in database.') // eslint-disable-line prefer-promise-reject-errors
+      if (mapEntry == null) return Promise.reject('Map tile does not exist in database.')
 
       // check if city exist
-      if (mapEntry.city == null) return Promise.reject('City does not exist on tile.') // eslint-disable-line prefer-promise-reject-errors
+      if (mapEntry.city == null) return Promise.reject('City does not exist on tile.')
 
       // check if user owns city
-      if (mapEntry.city.owner !== executor) return Promise.reject('User does not own city.') // eslint-disable-line prefer-promise-reject-errors
+      if (mapEntry.city.owner !== executor) return Promise.reject('User does not own city.')
 
       // rename city on map and write both to database
       await client.database.collection('cities').updateOne({ xPos: xPos, yPos: yPos }, { $set: { name: name } })
@@ -367,9 +400,9 @@ module.exports = client => {
     },
 
     /**
-        * Calculates next city max population @ level
-        * @param {Integer} level the level to run calculation with
-       */
+    * Calculates next city max population @ level
+    * @param {Integer} level the level to run calculation with
+    */
     calculateMaxPopulation: async (level) => {
       // calculate max population
       const maxPop = level * 1000
@@ -379,31 +412,31 @@ module.exports = client => {
     },
 
     /**
-       * levels up a users city if they can afford it
-       * @param {String} uid a discord user id
-       * @param {Integer} xPos position on map grid
-       * @param {Integer} yPos position on map grid
-       */
+     * levels up a users city if they can afford it
+     * @param {Snowflake} uid a discord user id
+     * @param {Integer} xPos position on map grid
+     * @param {Integer} yPos position on map grid
+     */
     levelCity: async (uid, xPos, yPos) => {
       // check if user exist
       const userEntry = await client.database.collection('users').findOne({ uid: uid })
-      if (userEntry == null) return Promise.reject('User does not exist in database.') // eslint-disable-line prefer-promise-reject-errors
+      if (userEntry == null) return Promise.reject('User does not exist in database.')
 
       // check if tile exist
       const mapEntry = await client.game.getTile(xPos, yPos)
-      if (mapEntry == null) return Promise.reject('Map tile does not exist in database.') // eslint-disable-line prefer-promise-reject-errors
+      if (mapEntry == null) return Promise.reject('Map tile does not exist in database.')
 
       // check if city exist
-      if (mapEntry.city == null) return Promise.reject('City does not exist on tile.') // eslint-disable-line prefer-promise-reject-errors
+      if (mapEntry.city == null) return Promise.reject('City does not exist on tile.')
 
       // check if user own city
-      if (mapEntry.city.owner !== uid) return Promise.reject('User does not own city.') // eslint-disable-line prefer-promise-reject-errors
+      if (mapEntry.city.owner !== uid) return Promise.reject('User does not own city.')
 
       // get cost
       const cost = await client.game.calculateLevelCost(mapEntry.city.level)
 
       // check if user can afford
-      if (userEntry.gold - cost < 0) return Promise.reject('User cannot afford to level!') // eslint-disable-line prefer-promise-reject-errors
+      if (userEntry.gold - cost < 0) return Promise.reject('User cannot afford to level!')
 
       // write changes
       await client.database.collection('users').updateOne({ uid: uid }, {
@@ -423,32 +456,32 @@ module.exports = client => {
       })
 
       // resolve once finished
-      return Promise.resolve()
+      return Promise.resolve(mapEntry.city.level + 1)
     },
 
     /**
-       * moves work force between jobs at a settlement
-       * @param {String} uid a discord user id
-       * @param {Integer} xPos position on map grid
-       * @param {Integer} yPos position on map grid
-       * @param {String} origin original work force you want to modify
-       * @param {String} target target work force you want to move original to
-       * @param {Integer} amount amount to transition
-       */
+     * moves work force between jobs at a settlement
+     * @param {Snowflake} uid a discord user id
+     * @param {Integer} xPos position on map grid
+     * @param {Integer} yPos position on map grid
+     * @param {String} origin original work force you want to modify
+     * @param {String} target target work force you want to move original to
+     * @param {Integer} amount amount to transition
+     */
     changePopulationJob: async (uid, xPos, yPos, origin, target, amount) => {
       // check if user exist
       const userEntry = await client.database.collection('users').findOne({ uid: uid })
-      if (userEntry == null) return Promise.reject('User does not exist in database.') // eslint-disable-line prefer-promise-reject-errors
+      if (userEntry == null) return Promise.reject('User does not exist in database.')
 
       // check if tile exist
       const mapEntry = await client.game.getTile(xPos, yPos)
-      if (mapEntry == null) return Promise.reject('Map tile does not exist in database.') // eslint-disable-line prefer-promise-reject-errors
+      if (mapEntry == null) return Promise.reject('Map tile does not exist in database.')
 
       // check if city exist
-      if (mapEntry.city == null) return Promise.reject('City does not exist on tile.') // eslint-disable-line prefer-promise-reject-errors
+      if (mapEntry.city == null) return Promise.reject('City does not exist on tile.')
 
       // check if user owns city
-      if (mapEntry.city.owner !== uid) return Promise.reject('User does not own city.') // eslint-disable-line prefer-promise-reject-errors
+      if (mapEntry.city.owner !== uid) return Promise.reject('User does not own city.')
 
       // uniformize job names
       origin = origin.toLowerCase()
@@ -457,12 +490,12 @@ module.exports = client => {
       // check to make sure job exist
       const possibleJobs = ['military', 'workers', 'farmers', 'miners', 'unemployed']
 
-      if (!possibleJobs.includes(origin)) return Promise.reject('Origin job does not exist.') // eslint-disable-line prefer-promise-reject-errors
-      if (!possibleJobs.includes(target)) return Promise.reject('Target job does not exist.') // eslint-disable-line prefer-promise-reject-errors
+      if (!possibleJobs.includes(origin)) return Promise.reject('Origin job does not exist.')
+      if (!possibleJobs.includes(target)) return Promise.reject('Target job does not exist.')
 
       // check to make sure there are no shenanigans going on here
-      if (amount <= 0) return Promise.reject('You must enter a value greater than 0.') // eslint-disable-line prefer-promise-reject-errors
-      if (mapEntry.city.population[origin] - amount < 0) return Promise.reject('You do not have enough people to do this.') // eslint-disable-line prefer-promise-reject-errors
+      if (amount <= 0) return Promise.reject('You must enter a value greater than 0.')
+      if (mapEntry.city.population[origin] - amount < 0) return Promise.reject('You do not have enough people to do this.')
 
       mapEntry.city.population[origin] -= amount
       mapEntry.city.population[target] += amount
@@ -474,14 +507,13 @@ module.exports = client => {
     },
 
     /**
-       * Scouts the tile the user is currently on
-       * @param {Integer} xPos a position on map
-       * @param {Integer} yPos a position on map
-       */
+     * Scouts the tile the user is currently on
+     * @param {Snowflake} uid discord id
+     */
     calculateScoutTime: async (uid) => {
       // check if user exist
       const userEntry = await client.database.collection('users').findOne({ uid: uid })
-      if (userEntry == null) return Promise.reject('User does not exist in database.') // eslint-disable-line prefer-promise-reject-errors
+      if (userEntry == null) return Promise.reject('User does not exist in database.')
 
       let time
       if (userEntry.scoutedTiles.some(x => x.xPos === userEntry.xPos && x.yPos === userEntry.yPos)) {
@@ -494,19 +526,19 @@ module.exports = client => {
     },
 
     /**
-       * Scouts the tile the user is currently on
-       * @param {String} uid a discord user id
-       */
+     * Scouts the tile the user is currently on
+     * @param {Snowflake} uid a discord user id
+     */
     scoutTile: async (uid) => {
       // check if user exist
       const userEntry = await client.database.collection('users').findOne({ uid: uid })
-      if (userEntry == null) return Promise.reject('User does not exist in database.') // eslint-disable-line prefer-promise-reject-errors
+      if (userEntry == null) return Promise.reject('User does not exist in database.')
 
       // check if tile exist
       const mapEntry = await client.game.getTile(userEntry.xPos, userEntry.yPos)
 
       // check if user is on cooldown
-      if (client.game.scoutCooldown.has(uid)) return Promise.reject('User is currently scouting a tile.') // eslint-disable-line prefer-promise-reject-errors
+      if (client.game.scoutCooldown.has(uid)) return Promise.reject('User is currently scouting a tile.')
 
       // push tile to array and write to database
       let time
@@ -540,13 +572,13 @@ module.exports = client => {
     },
 
     /**
-       * Generates the gold in the users cities
-       * @param {String} uid Users discord id
-       */
+     * Generates the gold in the users cities
+     * @param {Snowflake} uid Users discord id
+     */
     generateGold: async (uid) => {
       // check if user exist
       const userEntry = await client.database.collection('users').findOne({ uid: uid })
-      if (userEntry == null) return Promise.reject('User does not exist in database.') // eslint-disable-line prefer-promise-reject-errors
+      if (userEntry == null) return Promise.reject('User does not exist in database.')
 
       const userCities = await client.game.getUserCities(uid)
 
@@ -565,13 +597,13 @@ module.exports = client => {
     },
 
     /**
-       * Generates the food in the users cities
-       * @param {String} uid Users discord id
-       */
+     * Generates the food in the users cities
+     * @param {Snowflake} uid Users discord id
+     */
     generateFood: async (uid) => {
       // check if user exist
       const userEntry = await client.database.collection('users').findOne({ uid: uid })
-      if (userEntry == null) return Promise.reject('User does not exist in database.') // eslint-disable-line prefer-promise-reject-errors
+      if (userEntry == null) return Promise.reject('User does not exist in database.')
 
       // for each city
       const userCities = await client.game.getUserCities(uid)
@@ -592,13 +624,13 @@ module.exports = client => {
     },
 
     /**
-       * Generates the resource in the users cities
-       * @param {String} uid Users discord id
-       */
+     * Generates the resource in the users cities
+     * @param {Snowflake} uid Users discord id
+     */
     generateResource: async (uid) => {
       // check if user exist
       const userEntry = await client.database.collection('users').findOne({ uid: uid })
-      if (userEntry == null) return Promise.reject('User does not exist in database.') // eslint-disable-line prefer-promise-reject-errors
+      if (userEntry == null) return Promise.reject('User does not exist in database.')
 
       const userCities = await client.game.getUserCities(uid)
       userCities.forEach(async cityEntry => {
@@ -621,13 +653,13 @@ module.exports = client => {
     },
 
     /**
-       * Consume food function
-       * @param {String} uid Users discord id
-       */
+     * Consume food function
+     * @param {Snowflake} uid Users discord id
+     */
     consumeFood: async (uid) => {
       // check if user exist
       const userEntry = await client.database.collection('users').findOne({ uid: uid })
-      if (userEntry == null) return Promise.reject('User does not exist in database.') // eslint-disable-line prefer-promise-reject-errors
+      if (userEntry == null) return Promise.reject('User does not exist in database.')
 
       const userCities = await client.game.getUserCities(uid)
       userCities.forEach(async cityEntry => {
@@ -669,14 +701,14 @@ module.exports = client => {
     },
 
     /**
-       * Gets user cities based on page number
-       * @param {String} uid
-       * @param {Integer} pageNumber
-       */
+     * Gets user cities based on page number
+     * @param {Snowflake} uid
+     * @param {Integer} pageNumber
+     */
     getUserCityNames: async (uid, pageNumber) => {
       // check if user exist
       const userEntry = await client.database.collection('users').findOne({ uid: uid })
-      if (userEntry == null) return Promise.reject('User does not exist in database.') // eslint-disable-line prefer-promise-reject-errors
+      if (userEntry == null) return Promise.reject('User does not exist in database.')
 
       const userCities = await client.game.getUserCities(uid)
 
@@ -735,14 +767,250 @@ module.exports = client => {
     },
 
     /**
-       * Gets the city by the name
-       * @param {String} uid
-       * @param {String} name
-       */
+     * Gets the city by the name
+     * @param {Snowflake} uid
+     * @param {String} name
+     */
     getCityByName: async (uid, name) => {
       const city = await client.database.collection('cities').findOne({ name: name, owner: uid })
       if (!city) return null
       return client.game.getTile(city.xPos, city.yPos)
+    },
+
+    /**
+     * Creates a user alliance
+     * @param {Snowflake} uid discord id
+     * @param {String} name alliance name
+     */
+    createAlliance: async (uid, name) => {
+      // check if user exist
+      const userEntry = await client.database.collection('users').findOne({ uid: uid })
+      if (userEntry == null) return Promise.reject('User does not exist in database.')
+
+      // Check to see if alliance exist
+      const allianceEntry = await client.database.collection('alliances').findOne({ name: new RegExp(`^${name}$`, 'i') })
+      if (allianceEntry != null) return Promise.reject('Alliance exist in database.')
+
+      // Setup alliance object
+      const obj = {
+        owner: uid,
+        name: name,
+        gold: 0,
+        pendingApproval: [],
+        members: []
+      }
+
+      // write to user and alliance database
+      await client.database.collection('alliances').insertOne(obj)
+
+      // resolve
+      return Promise.resolve()
+    },
+
+    /**
+     * Applies to alliance
+     * @param {Snowflake} uid discord id
+     * @param {String} name alliance name
+     */
+    applyToAlliance: async (uid, name) => {
+      // check if user exist
+      const userEntry = await client.database.collection('users').findOne({ uid: uid })
+      if (userEntry == null) return Promise.reject('User does not exist in database.')
+
+      // Check to see if alliance exist
+      const allianceEntry = await client.database.collection('alliances').findOne({ name: name })
+      if (allianceEntry == null) return Promise.reject('Alliance doest not exist in database.')
+
+      // check to see if user is already applying to one
+      const userApplicationSearch = await client.database.collection('alliances').findOne({
+        $or: [
+          {
+            pendingApproval: {
+              $elemMatch: {
+                $in: [uid]
+              }
+            }
+          },
+          {
+            members: {
+              $elemMatch: {
+                $in: [uid]
+              }
+            }
+          },
+          {
+            owner: uid
+          }
+        ]
+      })
+      if (userApplicationSearch != null) return Promise.reject('User already in or applied to an alliance.')
+
+      // add user to alliance array
+      allianceEntry.pendingApproval.push(uid)
+
+      // write to database
+      client.database.collection('alliances').updateOne({ name: name }, { $set: { pendingApproval: allianceEntry.pendingApproval } })
+
+      // resolve
+      return Promise.resolve()
+    },
+
+    /**
+     * Cancels alliance application
+     * @param {Snowflake} uid discord id
+     * @param {String} name alliance name
+     */
+    cancelAllianceApplication: async (uid) => {
+      // check if user exists
+      const userEntry = await client.database.collection('users').findOne({ uid: uid })
+      if (userEntry == null) return Promise.reject('User does not exist in database.')
+
+      // Check to see if alliance exists and user has applied to it
+      const allianceEntry = await client.database.collection('alliances').findOne({
+        pendingApproval: {
+          $elemMatch: {
+            $in: [uid]
+          }
+        }
+      })
+      if (allianceEntry == null) return Promise.reject('User has not applied to an alliance.')
+
+      // filter out target
+      allianceEntry.pendingApproval.filter(e => e !== uid)
+
+      // write to database
+      await client.database.collection('alliances').updateOne({ name: allianceEntry.name }, { $set: { pendingApproval: allianceEntry.pendingApproval } })
+
+      // resolve
+      return Promise.resolve()
+    },
+
+    /**
+     * Accepts user into alliance
+     * @param {Snowflake} uid
+     * @param {Snowflake} target
+     */
+    acceptToAlliance: async (uid, target) => {
+      // check if user exist
+      const userEntry = await client.database.collection('users').findOne({ uid: uid })
+      if (userEntry == null) return Promise.reject('User does not exist in database.')
+
+      // Check to see if alliance exist and user owns
+      const allianceEntry = await client.database.collection('alliances').findOne({
+        pendingApproval: {
+          $elemMatch: {
+            $in: [target]
+          }
+        }
+      })
+
+      if (allianceEntry == null) return Promise.reject('Alliance doest not exist in database.')
+      if (allianceEntry.owner !== uid) return Promise.reject('User does not own alliance.')
+
+      // check to see if user exist in alliance pending
+      if (!allianceEntry.pendingApproval.includes(target)) return Promise.reject('User has not applied to alliance')
+
+      // filter out target
+      allianceEntry.pendingApproval.filter(e => e !== target)
+      allianceEntry.members.push(target)
+
+      // write to database
+      await client.database.collection('alliances').updateOne({ name: allianceEntry.name }, { $set: { pendingApproval: allianceEntry.pendingApproval } })
+      await client.database.collection('alliances').updateOne({ name: allianceEntry.name }, { $set: { members: allianceEntry.members } })
+
+      // resolve
+      return Promise.resolve()
+    },
+
+    /**
+     * Denies user from alliance
+     * @param {Snowflake} uid
+     * @param {Snowflake} target
+     */
+    denyFromAlliance: async (uid, target) => {
+      // check if user exist
+      const userEntry = await client.database.collection('users').findOne({ uid: uid })
+      if (userEntry == null) return Promise.reject('User does not exist in database.')
+
+      // Check to see if alliance exist and user owns
+      const allianceEntry = await client.database.collection('alliances').findOne({
+        pendingApproval: {
+          $elemMatch: {
+            $in: [target]
+          }
+        }
+      })
+
+      if (allianceEntry == null) return Promise.reject('Alliance doest not exist in database.')
+      if (allianceEntry.owner !== uid) return Promise.reject('User does not own alliance.')
+
+      // check to see if user exist in alliance pending
+      if (!allianceEntry.pendingApproval.includes(target)) return Promise.reject('User has not applied to alliance')
+
+      // filter out target
+      allianceEntry.pendingApproval.filter(e => e !== target)
+
+      // write to database
+      await client.database.collection('alliances').updateOne({ name: allianceEntry.name }, { $set: { pendingApproval: allianceEntry.pendingApproval } })
+
+      // resolve
+      return Promise.resolve()
+    },
+
+    /**
+     * Gets the users alliance object
+     * @param {Snowflake} uid
+     */
+    getAlliance: async (uid) => {
+      // Check to see if alliance exist and user owns
+      const allianceEntry = await client.database.collection('alliances').findOne({
+        $or: [
+          {
+            members: {
+              $elemMatch: {
+                $in: [uid]
+              }
+            }
+          },
+          {
+            owner: uid
+          }
+        ]
+      })
+      if (allianceEntry == null) return Promise.reject('User not in an alliance.')
+
+      // resolve the object
+      return Promise.resolve(allianceEntry)
+    },
+
+    /**
+     * Makes user leave alliance
+     * @param {Snowflake} uid
+     */
+    leaveAlliance: async (uid) => {
+      // check if user exist
+      const userEntry = await client.database.collection('users').findOne({ uid: uid })
+      if (userEntry == null) return Promise.reject('User does not exist in database.')
+
+      // Check to see if alliance exist and user owns
+      const allianceEntry = await client.database.collection('alliances').findOne({
+        members: {
+          $elemMatch: {
+            $in: [uid]
+          }
+        }
+      })
+      if (allianceEntry == null) return Promise.reject('User is not in an alliance.')
+      if (allianceEntry.owner === uid) return Promise.reject('User currently owns alliance, you must disband to leave.')
+
+      // remove user from alliance
+      allianceEntry.members.filter(e => e !== uid)
+
+      // write to database
+      await client.database.collection('alliances').updateOne({ name: allianceEntry.name }, { $set: { members: allianceEntry.members } })
+
+      // resolve
+      return Promise.resolve()
     }
   }
 }
