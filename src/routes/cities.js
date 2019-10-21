@@ -7,7 +7,7 @@ module.exports = client => {
    * @param {Integer} currentLevel Current level of the city
    * @returns {Object<cost: Integer>}
    */
-  router.get('/cost/:currentLevel', (req, res) => {
+  router.get('/level/:currentLevel', (req, res) => {
     client.game.calculateLevelCost(Number(req.params.currentLevel))
       .then(cost => { res.json({ cost: cost }) })
       .catch(e => res.json({ error: e }))
