@@ -10,6 +10,7 @@ const client = {
 // Import custom libraries
 require('./lib/database.js')(client)
 require('./lib/game.js')(client)
+require('./lib/cronJobs.js')(client)
 
 // engine setup and database connect
 const app = express()
