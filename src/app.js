@@ -27,24 +27,14 @@ app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({
   extended: true
 }))
-app.put('/api/users/:user', async (req, res) => {
-  client.game.createUser(req.params.user)
+app.put('/api/users', async (req, res) => {
+  if (!req.headers.user) return res.json({ error: 'Missing user' })
+  client.game.createUser(req.headers.user)
     .then(user => {
       res.json(user)
     })
     .catch(e => res.json({ error: e }))
 })
-
-// routers not requiring user
-
-// middleware for user
-// app.use(async (req, res, next) => {
-//   const user = await client.database.collection('users').findOne({ uid: req.headers.user || req.query.user })
-//   if (!user) return res.json({ error: 'Invalid user' })
-//   delete user._id
-//   req.user = user
-//   next()
-// })
 
 // routers requiring user
 app.use('/api/tiles', require('./routes/tiles.js')(client))
