@@ -12,7 +12,7 @@ class WebsocketManager extends EventEmitter {
   }
 
   start () {
-    this.ws = new WS.Server({ port: 1000 })
+    this.ws = new WS.Server({ port: this.client.settings.ws.port })
     this.clients.clear()
     this.handleEvents()
   }
