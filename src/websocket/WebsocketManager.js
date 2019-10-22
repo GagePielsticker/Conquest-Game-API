@@ -60,7 +60,7 @@ class WebsocketManager extends EventEmitter {
       const con = this.clients.get(connection.id)
       if (!con || !con.hello) {
         console.log(`${new Date()} Never received hello on ${connection.id}. Closed.`)
-        connection.close()
+        connection.close(3000, 'Didnt receive response hello in time')
       } else {
         console.log(`${new Date()} received hello event on ${connection.id}. Connecting finished.`)
       }
