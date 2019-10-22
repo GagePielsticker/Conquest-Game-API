@@ -73,7 +73,7 @@ class WebsocketManager extends EventEmitter {
   }
 
   ack (wsID) {
-    console.log(`${new Date()} Acknowleding heartbeat on client ${wsID}`)
+    console.log(`${new Date()} Acknowledging heartbeat on client ${wsID}`)
     this.send(wsID, 'ack', { acknowldeged: true })
   }
 
