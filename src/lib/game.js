@@ -151,7 +151,7 @@ module.exports = client => {
       client.game.movementCooldown.delete(uid)
 
       client.database.collection('movement').removeOne({ uid: uid })
-      
+
       client.ws.send(null, 'STOP_USER', { user: uid })
 
       // resolve
