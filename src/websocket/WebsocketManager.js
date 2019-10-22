@@ -32,6 +32,9 @@ class WebsocketManager extends EventEmitter {
       console.log(`${new Date()} websocket connection closed, ID: ${wsID}; Code: ${code}, Reason: ${reason}`)
       this.clients.delete(wsID)
     })
+    connection.on('error', () => {
+      this.clients.delete(wsID)
+    })
     connection.on('message', (msg) => {
       const data = JSON.parse(msg)
       this.emit('raw', data)
