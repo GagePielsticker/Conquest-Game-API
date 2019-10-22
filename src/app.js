@@ -15,7 +15,11 @@ require('./websocket/Setup.js')(client)
 
 // engine setup and database connect
 const app = express()
-client.connectDb()
+client.connectDb().then(x => {
+  client.game.loadMovement()
+    .then(console.log)
+    .catch(console.log)
+})
 
 // middleware setup
 app.use(logger('common'))

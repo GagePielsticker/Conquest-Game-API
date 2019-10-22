@@ -941,6 +941,22 @@ module.exports = client => {
 
       // resolve
       return Promise.resolve()
+    },
+    loadMovement: () => {
+      return new Promise((resolve, reject) => {
+        client.database.collection('movement').find({})
+          .toArray((err, users) => {
+            if (err) return reject(err)
+            const promises = users.map(x => client.game.moveUser(x.uid, x.xPos, x.yPos))
+            Promise.all(promises)
+              .then(() => {
+                resolve(`Moved ${users.length} users back into movement interval`)
+              })
+              .catch(err => {
+                reject(`Error moving movements back into movement interval; ${err}`) // eslint-disable-line prefer-promise-reject-errors
+              })
+          })
+      })
     }
   }
 }
