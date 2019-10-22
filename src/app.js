@@ -11,6 +11,7 @@ const client = {
 require('./lib/database.js')(client)
 require('./lib/game.js')(client)
 require('./lib/cronJobs.js')(client)
+require('./websocket/Setup.js')(client)
 
 // engine setup and database connect
 const app = express()
@@ -22,7 +23,7 @@ app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({
   extended: true
 }))
-
+app.get('/', () => { process.exit() })
 app.put('/api/users/:user', async (req, res) => {
   client.game.createUser(req.params.user)
     .then(user => {
