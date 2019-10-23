@@ -5,7 +5,7 @@ class WebsocketManager extends EventEmitter {
   constructor (client) {
     super()
     this.client = client
-    this.clients = new Map()
+    this.CLIENTS = new Map()
 
     this.ws = null
     this.start()
@@ -13,7 +13,7 @@ class WebsocketManager extends EventEmitter {
 
   start () {
     this.ws = new WS.Server({ port: this.client.settings.ws.port })
-    this.clients.clear()
+    this.CLIENTS.clear()
     this.handleEvents()
   }
 
@@ -24,17 +24,18 @@ class WebsocketManager extends EventEmitter {
   }
 
   handleConnection (connection) {
-    const wsID = new Date().getTime()
+    const wsID = `${new Date().getTime()}`
     console.log(`${new Date()} new websocket connection, ID: ${wsID}`)
     connection.id = wsID
     connection.hello = false
-    this.clients.set(wsID, connection)
+    connection.auth = null
+    this.CLIENTS.set(wsID, connection)
     connection.on('close', (code, reason) => {
       console.log(`${new Date()} websocket connection closed, ID: ${wsID}; Code: ${code}, Reason: ${reason}`)
-      this.clients.delete(wsID)
+      this.CLIENTS.delete(wsID)
     })
     connection.on('error', () => {
-      this.clients.delete(wsID)
+      this.CLIENTS.delete(wsID)
     })
     connection.on('message', (msg) => {
       const data = JSON.parse(msg)
@@ -42,9 +43,12 @@ class WebsocketManager extends EventEmitter {
       this.emit(data.event, data.data)
 
       if (data.event === 'hello') {
-        const newConnect = this.clients.get(wsID)
+        if(!data.data) return
+        if (data.data.auth !== this.client.settings.ws.auth) return connection.close(3000, 'Unauthorized')
+        const newConnect = this.CLIENTS.get(wsID)
+        newConnect.auth = Math.random().toString(36).substr(2)
         newConnect.hello = true
-        this.clients.set(wsID, newConnect)
+        this.CLIENTS.set(wsID, newConnect)
       }
       if (data.event === 'heartbeat') this.ack(wsID)
     })
@@ -57,11 +61,12 @@ class WebsocketManager extends EventEmitter {
       hb: this.client.settings.ws.heartbeat_interval
     })
     setTimeout(() => {
-      const con = this.clients.get(connection.id)
-      if (!con || !con.hello) {
+      const con = this.CLIENTS.get(connection.id)
+      if (!con || !con.hello || !con.auth) {
         console.log(`${new Date()} Never received hello on ${connection.id}. Closed.`)
         connection.close(3000, 'Didn\'t receive response hello in time')
       } else {
+        this.send(connection.id, 'auth', { auth: con.auth })
         console.log(`${new Date()} received hello event on ${connection.id}. Connecting finished.`)
       }
     }, 5000)
@@ -78,7 +83,7 @@ class WebsocketManager extends EventEmitter {
         )
       )
     } else {
-      this.clients.forEach(client => {
+      this.CLIENTS.forEach(client => {
         this._sendData(client.id,
           JSON.stringify(
             {
@@ -92,7 +97,7 @@ class WebsocketManager extends EventEmitter {
   }
 
   _sendData (wsID, data) {
-    this.clients.get(wsID).send(data)
+    this.CLIENTS.get(wsID).send(data)
   }
 
   ack (wsID) {

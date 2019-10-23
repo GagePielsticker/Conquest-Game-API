@@ -27,6 +27,21 @@ app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({
   extended: true
 }))
+
+app.use((req, res, next) => {
+  if (!req.headers.authorization || !(typeof req.headers.authorization === 'string')) return res.json({ error: 'No authorization code was supplied' })
+  const { 0: id, 1: auth } = req.headers.authorization.split(' ')
+  if (!id) return res.json({ error: 'No WS ID was supplied' })
+  if (!auth) return res.json({ error: 'No WS Auth was supplied' })
+
+  const connection = client.ws.CLIENTS.get(id)
+  if (!connection) return res.json({ error: 'Invalid client ID' })
+  console.log(connection.auth, auth)
+  if (connection.auth !== auth) return res.json({ error: 'Invalid authorization for client' })
+  
+  next()
+})
+
 app.put('/api/users', async (req, res) => {
   if (!req.headers.user) return res.json({ error: 'Missing user' })
   client.game.createUser(req.headers.user)
