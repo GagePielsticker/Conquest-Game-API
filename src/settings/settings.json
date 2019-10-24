@@ -20,6 +20,6 @@
     "ws": {
       "port": 80,
       "heartbeat_interval": 30000,
-      "auth": "jpberry!is!gay"
+      "auth": "uber!is!gay"
     }
 }
