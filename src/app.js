@@ -38,7 +38,7 @@ app.use((req, res, next) => {
   if (!connection) return res.json({ error: 'Invalid client ID' })
   console.log(connection.auth, auth)
   if (connection.auth !== auth) return res.json({ error: 'Invalid authorization for client' })
-  
+
   next()
 })
 

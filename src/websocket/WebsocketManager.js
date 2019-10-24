@@ -30,6 +30,7 @@ class WebsocketManager extends EventEmitter {
     connection.hello = false
     connection.auth = null
     this.CLIENTS.set(wsID, connection)
+
     connection.on('close', (code, reason) => {
       console.log(`${new Date()} websocket connection closed, ID: ${wsID}; Code: ${code}, Reason: ${reason}`)
       this.CLIENTS.delete(wsID)
@@ -43,7 +44,7 @@ class WebsocketManager extends EventEmitter {
       this.emit(data.event, data.data)
 
       if (data.event === 'hello') {
-        if(!data.data) return
+        if (!data.data) return
         if (data.data.auth !== this.client.settings.ws.auth) return connection.close(3000, 'Unauthorized')
         const newConnect = this.CLIENTS.get(wsID)
         newConnect.auth = Math.random().toString(36).substr(2)
