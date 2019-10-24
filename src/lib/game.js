@@ -92,6 +92,7 @@ module.exports = client => {
           owner: null,
           name: nameGenerator({ words: 2 }).dashed,
           tradeRoutes: [],
+          buildings: [],
           resources: {
             stone: Math.floor(Math.random() * 11),
             maxStone: 2000,
@@ -273,6 +274,7 @@ module.exports = client => {
         owner: uid,
         name: name,
         tradeRoutes: [],
+        buildings: [],
         resources: {
           stone: 0,
           maxStone: 2000,
@@ -1099,6 +1101,7 @@ module.exports = client => {
         ]
       }, { $set: { gold: allianceEntry.gold } })
 
+      // resolve
       return Promise.resolve(userEntry.gold)
     },
 
