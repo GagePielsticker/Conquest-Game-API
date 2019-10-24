@@ -1020,6 +1020,42 @@ module.exports = client => {
     },
 
     /**
+     * Give target gold from users wallet
+     * @param {Snowflake} uid
+     * @param {Snowflake} target
+     * @param {Integer} amount
+     */
+    giveGold: async (uid, target, amount) => {
+      // check if user exist
+      const userEntry = await client.database.collection('users').findOne({ uid: uid })
+      if (userEntry == null) return Promise.reject('User does not exist in database.')
+
+      // check if target exist
+      const targetEntry = await client.database.collection('users').findOne({ uid: target })
+      if (targetEntry == null) return Promise.reject('Target does not exist in database.')
+
+      // check if can afford
+      if (userEntry.gold - amount < 0) return Promise.reject('User cannot afford this action')
+      if (amount < 0) return Promise.reject('Invalid amount, must be over 0.')
+
+      // calculations
+      userEntry.gold -= amount
+      targetEntry.gold += amount
+
+      // write to database
+      await client.database.collection('users').updateOne({ uid: uid }, {
+        $set: { gold: userEntry.gold }
+      })
+
+      await client.database.collection('users').updateOne({ uid: target }, {
+        $set: { gold: targetEntry.gold }
+      })
+
+      // resolve
+      return Promise.resolve(userEntry.gold)
+    },
+
+    /**
      * Gives the users alliance a specific amount of gold
      * @param {Snowflake} uid
      * @param {Integer} amount
