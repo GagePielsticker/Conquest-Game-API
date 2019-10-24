@@ -959,7 +959,7 @@ module.exports = client => {
       })
 
       // check to see if user owns alliance
-      if (!allianceEntry) return Promise.reject('User does not own an alliance.')
+      if (allianceEntry == null) return Promise.reject('User does not own an alliance.')
 
       // set the alliance name
       return client.database.collection('alliances').updateOne({ owner: uid }, {
