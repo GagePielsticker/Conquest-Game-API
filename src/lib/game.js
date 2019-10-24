@@ -969,6 +969,68 @@ module.exports = client => {
       })
     },
 
+    /**
+     * Disbands a users alliance
+     * @param {Snowflake} uid
+     */
+    disbandAlliance: async (uid) => {
+      // check if user exist
+      const userEntry = await client.database.collection('users').findOne({ uid: uid })
+      if (userEntry == null) return Promise.reject('User does not exist in database.')
+
+      // Check to see if alliance exist
+      const allianceEntry = await client.database.collection('alliances').findOne({ owner: uid })
+      if (allianceEntry == null) return Promise.reject('User does not own an alliance.')
+
+      // remove and resolve
+      return client.database.collection('alliances').removeOne({ owner: uid })
+    },
+
+    /**
+     * Gives the users alliance a specific amount of gold
+     * @param {Snowflake} uid
+     * @param {Integer} amount
+     */
+    giveAllianceGold: async (uid, amount) => {
+      // check if user exist
+      const userEntry = await client.database.collection('users').findOne({ uid: uid })
+      if (userEntry == null) return Promise.reject('User does not exist in database.')
+
+      // Check to see if alliance exist
+      const allianceEntry = await client.database.collection('alliances').findOne({
+        $or: [
+          {
+            members: { $elemMatch: { $in: [uid] } }
+          },
+          { owner: uid }
+        ]
+      })
+      if (allianceEntry == null) return Promise.reject('User is not in an alliance.')
+
+      // See if they can afford donation
+      if (userEntry.gold - amount < 0) return Promise.reject('User cannot afford this action.')
+
+      // calculate diffrence
+      userEntry.gold -= amount
+      allianceEntry.gold += amount
+
+      // remove gold from user and add to alliance
+      await client.database.collection('users').updateOne({ uid: uid }, {
+        $set: { gold: userEntry.gold }
+      })
+
+      await client.database.collection('alliances').updateOne({
+        $or: [
+          {
+            members: { $elemMatch: { $in: [uid] } }
+          },
+          { owner: uid }
+        ]
+      }, { $set: { gold: allianceEntry.gold } })
+
+      return Promise.resolve(userEntry.gold)
+    },
+
     // loads movement
     loadMovement: () => {
       return new Promise((resolve, reject) => {
