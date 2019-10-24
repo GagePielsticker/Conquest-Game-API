@@ -942,6 +942,34 @@ module.exports = client => {
       // resolve
       return Promise.resolve()
     },
+
+    /**
+     * Sets the alliance name
+     * @param {Snowflake} uid
+     * @param {String} name
+     */
+    renameAlliance: async (uid, name) => {
+      // check if user exist
+      const userEntry = await client.database.collection('users').findOne({ uid: uid })
+      if (userEntry == null) return Promise.reject('User does not exist in database.')
+
+      // Check to see if alliance exist and user owns
+      const allianceEntry = await client.database.collection('alliances').findOne({
+        owner: uid
+      })
+
+      // check to see if user owns alliance
+      if (!allianceEntry) return Promise.reject('User does not own an alliance.')
+
+      // set the alliance name
+      return client.database.collection('alliances').updateOne({ owner: uid }, {
+        $set: {
+          name: name
+        }
+      })
+    },
+
+    // loads movement
     loadMovement: () => {
       return new Promise((resolve, reject) => {
         client.database.collection('movement').find({})
