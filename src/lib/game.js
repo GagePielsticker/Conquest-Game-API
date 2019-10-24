@@ -987,6 +987,39 @@ module.exports = client => {
     },
 
     /**
+     * Disbands a users alliance
+     * @param {Snowflake} uid
+     */
+    takeAllianceGold: async (uid, amount) => {
+      // check if user exist
+      const userEntry = await client.database.collection('users').findOne({ uid: uid })
+      if (userEntry == null) return Promise.reject('User does not exist in database.')
+
+      // Check to see if alliance exist
+      const allianceEntry = await client.database.collection('alliances').findOne({ owner: uid })
+      if (allianceEntry == null) return Promise.reject('User does not own an alliance.')
+
+      // check can afford
+      if (allianceEntry.gold - amount < 0) return Promise.reject('Alliance cannot afford this action.')
+
+      // calculate
+      allianceEntry.gold -= amount
+      userEntry.gold += amount
+
+      // write to both databases
+      await client.database.collection('alliances').updateOne({ owner: uid }, {
+        $set: { gold: allianceEntry.gold }
+      })
+
+      await client.database.collection('user').updateOne({ uid: uid }, {
+        $set: { gold: userEntry.gold }
+      })
+
+      // resolve remaining amount
+      return Promise.resolve(allianceEntry.gold)
+    },
+
+    /**
      * Gives the users alliance a specific amount of gold
      * @param {Snowflake} uid
      * @param {Integer} amount
