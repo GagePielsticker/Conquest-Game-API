@@ -11,18 +11,28 @@ class WebsocketManager extends EventEmitter {
     this.start()
   }
 
+  /**
+   * Create WS server and begin event handling
+   */
   start () {
     this.ws = new WS.Server({ port: this.client.settings.ws.port })
     this.CLIENTS.clear()
     this.handleEvents()
   }
 
+  /**
+   * Add event handling
+   */
   handleEvents () {
     this.ws.on('connection', ws => {
       this.handleConnection(ws)
     })
   }
 
+  /**
+   * Handles a new connection and sets it up
+   * @param {Websocket} connection Websocket connection
+   */
   handleConnection (connection) {
     const wsID = `${new Date().getTime()}`
     console.log(`${new Date()} new websocket connection, ID: ${wsID}`)
@@ -56,6 +66,10 @@ class WebsocketManager extends EventEmitter {
     this.handleHello(connection)
   }
 
+  /**
+   * Send hello event, and await hello event back
+   * @param {Websocket} connection Websocket connection
+   */
   handleHello (connection) {
     this.send(connection.id, 'hello', {
       id: connection.id,
@@ -73,6 +87,12 @@ class WebsocketManager extends EventEmitter {
     }, 5000)
   }
 
+  /**
+   * Send an event with data to a websocket
+   * @param {String} wsID ID of connection to send too
+   * @param {String} event Name of event to send
+   * @param {Object} data Data object to send
+   */
   send (wsID, event, data) {
     if (wsID) {
       this._sendData(wsID,
@@ -97,15 +117,27 @@ class WebsocketManager extends EventEmitter {
     }
   }
 
+  /**
+   * Raw data sending (internal use)
+   * @param {String} wsID ID of connection to send too
+   * @param {String} data Stringified json to send
+   */
   _sendData (wsID, data) {
     this.CLIENTS.get(wsID).send(data)
   }
 
+  /**
+   * Handle heartbeat from connection, ack back
+   * @param {String} wsID ID of connection who sent heartbeat
+   */
   ack (wsID) {
     console.log(`${new Date()} Acknowledging heartbeat on client ${wsID}`)
     this.send(wsID, 'ack', { acknowldeged: true })
   }
 
+  /**
+   * Close websocket server
+   */
   kill () {
     this.ws.close(1012, 'Shutdown')
   }
