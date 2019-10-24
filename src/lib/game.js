@@ -1001,6 +1001,7 @@ module.exports = client => {
 
       // check can afford
       if (allianceEntry.gold - amount < 0) return Promise.reject('Alliance cannot afford this action.')
+      if (amount < 0) return Promise.reject('Invalid amount, must be over 0.')
 
       // calculate
       allianceEntry.gold -= amount
@@ -1078,6 +1079,7 @@ module.exports = client => {
 
       // See if they can afford donation
       if (userEntry.gold - amount < 0) return Promise.reject('User cannot afford this action.')
+      if (amount < 0) return Promise.reject('Invalid amount, must be over 0.')
 
       // calculate diffrence
       userEntry.gold -= amount
