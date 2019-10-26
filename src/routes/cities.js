@@ -42,7 +42,7 @@ module.exports = client => {
   })
 
   router.delete('/:xPos/:yPos', (req, res) => {
-    client.game.destroyCity(req.city.xPos, req.city.yPos)
+    client.game.destroyCity(req.user.uid, req.city.xPos, req.city.yPos)
       .then(() => res.json({ success: true }))
       .catch(e => res.json({ error: e }))
   })
