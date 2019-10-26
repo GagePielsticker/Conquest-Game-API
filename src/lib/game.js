@@ -360,8 +360,21 @@ module.exports = client => {
        */
     calculateLevelCost: async (currentLevel) => {
       // formula is (3760.60309(1.63068)^x) with x being level
-      const power = Math.pow(1.63068, currentLevel + 1)
-      const cost = Math.floor(3760.60309 * power)
+      const power = Math.pow(1.53068, currentLevel + 1)
+      const cost = Math.floor(4500.60309 * power)
+
+      // return cost
+      return cost
+    },
+
+    /**
+        * Calculates next city level cost
+        * @param {Integer} currentCityCount the current level of what you want to check
+       */
+    calculateSettlerCost: async (currentCityCount) => {
+      // formula is (3760.60309(1.63068)^x) with x being level
+      const power = Math.pow(1.43068, currentCityCount + 1)
+      const cost = Math.floor(4500.60309 * power)
 
       // return cost
       return cost
