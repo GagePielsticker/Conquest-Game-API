@@ -53,6 +53,7 @@ app.put('/api/users', async (req, res) => {
 // routers requiring user
 app.use('/api/tiles', require('./routes/tiles.js')(client))
 app.use('/api/users', require('./routes/users.js')(client))
+app.use('/api/leaderboard', require('./routes/leaderboard.js')(client))
 app.use('/api/cities', require('./routes/cities.js')(client))
 app.use('/api/alliances', require('./routes/alliances.js')(client))
 
