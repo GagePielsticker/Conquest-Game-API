@@ -305,6 +305,30 @@ module.exports = client => {
     },
 
     /**
+     * Buys a settler for the user
+     * @param {Snowflake} uid
+     */
+    buySettler: async (uid) => {
+      // check if user exist
+      const userEntry = await client.database.collection('users').findOne({ uid: uid })
+
+      // check if user has settler available
+      if (userEntry.hasSettler) return Promise.reject('User already has available settler.')
+
+      // get the price of the next settler
+      const price = await client.game.calculateSettlerCost(userEntry.cities.length)
+
+      // more checks
+      if (userEntry.gold - price < 0) return Promise.reject('User cannot afford a settler.')
+
+      // remove gold
+      userEntry.gold -= price
+
+      // save to database
+      return client.database.collection('users').updateOne({ uid: uid }, { $set: { gold: userEntry.gold, hasSettler: true } })
+    },
+
+    /**
      * Removes a users city - jpb sucks at documentation
      * @param {Snowflake} uid Discord id
      * @param {Integer} xPos position map
