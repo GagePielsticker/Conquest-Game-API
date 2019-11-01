@@ -20,6 +20,14 @@ module.exports = client => {
         users: userCount,
         shards: shardCount
       })
+    },
+
+    /**
+     * Fetches Statistics from database
+     * @returns {Promise<object>}
+     */
+    getStats: async () => {
+      return client.database.collection('statistics').find().sort({ time: -1 })[0]
     }
   }
 }
