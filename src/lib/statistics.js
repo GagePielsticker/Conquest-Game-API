@@ -3,7 +3,6 @@
 module.exports = client => {
   /* Get dependencies */
   const moment = require('moment')
-  const request = require('request')
 
   /** @namespace */
   client.stats = {
