@@ -3,6 +3,7 @@
 module.exports = client => {
   /* Get dependencies */
   const moment = require('moment')
+  const request = require('request')
 
   /** @namespace */
   client.stats = {
@@ -11,12 +12,14 @@ module.exports = client => {
      * Saves current guildCount to database at current time
      * @param {Integer} guildCount
      * @param {Integer} userCount
+     * @param {Integer} shardCount
      */
-    postStats: async (guildCount, userCount) => {
+    postStats: async (guildCount, userCount, shardCount) => {
       return client.database.collection('statistics').insertOne({
         time: moment().unix(),
         guilds: guildCount,
-        users: userCount
+        users: userCount,
+        shards: shardCount
       })
     }
   }
