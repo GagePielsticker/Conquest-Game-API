@@ -1145,6 +1145,19 @@ module.exports = client => {
       return Promise.resolve(userEntry.gold)
     },
 
+    /**
+     * Saves current guildCount to database at current time
+     * @param {Integer} guildCount
+     * @param {Integer} userCount
+     */
+    postStats: async (guildCount, userCount) => {
+      return client.database.collection('statistics').insertOne({
+        time: moment().unix(),
+        guilds: guildCount,
+        users: userCount
+      })
+    },
+
     // loads movement
     loadMovement: () => {
       return new Promise((resolve, reject) => {
