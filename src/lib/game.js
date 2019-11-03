@@ -315,8 +315,10 @@ module.exports = client => {
       // check if user has settler available
       if (userEntry.hasSettler) return Promise.reject('User already has available settler.')
 
+      const cities = await client.game.getUserCities(uid)
+
       // get the price of the next settler
-      const price = await client.game.calculateSettlerCost(userEntry.cities.length)
+      const price = await client.game.calculateSettlerCost(cities.length)
 
       // more checks
       if (userEntry.gold - price < 0) return Promise.reject('User cannot afford a settler.')
@@ -325,7 +327,9 @@ module.exports = client => {
       userEntry.gold -= price
 
       // save to database
-      return client.database.collection('users').updateOne({ uid: uid }, { $set: { gold: userEntry.gold, hasSettler: true } })
+      await client.database.collection('users').updateOne({ uid: uid }, { $set: { gold: userEntry.gold, hasSettler: true } })
+
+      return Promise.resolve(price)
     },
 
     /**

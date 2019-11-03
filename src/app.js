@@ -56,6 +56,7 @@ app.use('/api/users', require('./routes/users.js')(client))
 app.use('/api/leaderboard', require('./routes/leaderboard.js')(client))
 app.use('/api/cities', require('./routes/cities.js')(client))
 app.use('/api/alliances', require('./routes/alliances.js')(client))
+app.use('/api/shop', require('./routes/shop.js')(client))
 
 // catch 404 and forward to error handler
 app.use((req, res, next) => next(createError(404)))
