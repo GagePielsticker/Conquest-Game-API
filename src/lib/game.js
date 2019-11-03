@@ -43,6 +43,7 @@ module.exports = client => {
       // set default user object
       const userObject = {
         uid: uid,
+        createdAt: moment().unix(),
         xPos: xPos,
         yPos: yPos,
         gold: 200,
@@ -86,6 +87,7 @@ module.exports = client => {
       if (!city && base.city === true) {
         city = {
           level: 1,
+          createdAt: moment().unix(),
           xPos: xPos,
           yPos: yPos,
           inStasis: false,
@@ -268,6 +270,7 @@ module.exports = client => {
 
       const cityObject = {
         level: 1,
+        createdAt: moment().unix(),
         xPos: userEntry.xPos,
         yPos: userEntry.yPos,
         inStasis: false,
