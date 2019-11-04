@@ -1138,9 +1138,7 @@ module.exports = client => {
 
       await client.database.collection('alliances').updateOne({
         $or: [
-          {
-            members: { $elemMatch: { $in: [uid] } }
-          },
+          { members: { $elemMatch: { $in: [uid] } } },
           { owner: uid }
         ]
       }, { $set: { gold: allianceEntry.gold } })
