@@ -1147,6 +1147,30 @@ module.exports = client => {
       return Promise.resolve(userEntry.gold)
     },
 
+    /**
+     * Moves a users population to tile or city
+     * @param {Integer} originX
+     * @param {Integer} originY
+     * @param {Integer} targetX
+     * @param {Integer} targetY
+     * @param {Integer} amount
+     */
+    movePopulation: async (uid, originX, originY, targetX, targetY, amount) => {
+      // check if user exist
+      const userEntry = await client.database.collection('users').findOne({ uid: uid })
+      if (userEntry == null) return Promise.reject('User does not exist in database.')
+
+      const state = 'none'
+
+      // check if units are on tile
+
+      // check if units are in a city
+
+      // move units
+
+      // resolve
+    },
+
     // loads movement
     loadMovement: () => {
       return new Promise((resolve, reject) => {
