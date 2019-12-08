@@ -107,9 +107,12 @@ module.exports = client => {
           }
         })
 
+        // generate units for the city
         await client.database.collection('units').insertOne({
           type: 'military',
           amount: Math.floor(Math.random() * 25) + 1,
+          xPos: xPos,
+          yPos: yPos,
           origin: {
             xPos: xPos,
             yPos: yPos
@@ -119,6 +122,8 @@ module.exports = client => {
         await client.database.collection('units').insertOne({
           type: 'miners',
           amount: Math.floor(Math.random() * 25) + 1,
+          xPos: xPos,
+          yPos: yPos,
           origin: {
             xPos: xPos,
             yPos: yPos
@@ -128,6 +133,8 @@ module.exports = client => {
         await client.database.collection('units').insertOne({
           type: 'farmers',
           amount: Math.floor(Math.random() * 25) + 1,
+          xPos: xPos,
+          yPos: yPos,
           origin: {
             xPos: xPos,
             yPos: yPos
@@ -137,6 +144,8 @@ module.exports = client => {
         await client.database.collection('units').insertOne({
           type: 'workers',
           amount: Math.floor(Math.random() * 25) + 1,
+          xPos: xPos,
+          yPos: yPos,
           origin: {
             xPos: xPos,
             yPos: yPos
@@ -324,6 +333,8 @@ module.exports = client => {
       await client.database.collection('units').insertOne({
         type: 'unemployed',
         amount: Math.floor(Math.random() * 25) + 1,
+        xPos: xPos,
+        yPos: yPos,
         origin: {
           xPos: userEntry.xPos,
           yPos: userEntry.yPos
