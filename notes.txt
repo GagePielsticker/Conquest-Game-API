@@ -48,3 +48,22 @@ user database
   hasSettler: true,
   scoutedTiles: []
 }
+
+these are the current functions that have been changed to comply with new database structure (units)
+createuser
+gettile
+getusercities
+stopuser
+moveuser
+calculateTraveltime
+settlelocation
+buysettler
+destroycity
+setflag
+setempirename
+setcityname
+calculatelevelcost
+calculatesettlercost
+calculatemaxpopulation
+levelcity
+changepopulationjob
