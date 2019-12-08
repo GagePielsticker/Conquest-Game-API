@@ -49,6 +49,15 @@ user database
   scoutedTiles: []
 }
 
+alliance database
+{
+  owner: uid,
+  name: name,
+  gold: 0,
+  pendingApproval: [],
+  members: []
+}
+
 these are the current functions that have been changed to comply with new database structure (units)
 createuser
 gettile
