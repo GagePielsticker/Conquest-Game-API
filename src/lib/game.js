@@ -314,18 +314,21 @@ module.exports = client => {
           maxWood: 2000,
           food: 200,
           maxFood: 3000
-        },
-        population: {
-          military: 0,
-          miners: 0,
-          workers: 0,
-          farmers: 0,
-          unemployed: 100
         }
       }
 
       // create city in map
       await client.database.collection('cities').insertOne(cityObject)
+
+      // add the unemployed units
+      await client.database.collection('units').insertOne({
+        type: 'unemployed',
+        amount: Math.floor(Math.random() * 25) + 1,
+        origin: {
+          xPos: userEntry.xPos,
+          yPos: userEntry.yPos
+        }
+      })
 
       // remove settler from user and add city to their city array
       await client.database.collection('users').updateOne({ uid: uid }, { $set: { hasSettler: false } })
