@@ -65,7 +65,7 @@ module.exports = client => {
      * @param {Integer} yPos Position on map grid
      */
     getTile: async (xPos, yPos) => {
-      let city = await client.database.collection('cities').findOne({ xPos: xPos, yPos: yPos })
+      const city = await client.database.collection('cities').findOne({ xPos: xPos, yPos: yPos })
       const base = {
         xPos: xPos,
         yPos: yPos,
@@ -1014,15 +1014,9 @@ module.exports = client => {
       const allianceEntry = await client.database.collection('alliances').findOne({
         $or: [
           {
-            members: {
-              $elemMatch: {
-                $in: [uid]
-              }
-            }
+            members: { $elemMatch: { $in: [uid] } }
           },
-          {
-            owner: uid
-          }
+          { owner: uid }
         ]
       })
 
@@ -1041,11 +1035,7 @@ module.exports = client => {
 
       // Check to see if alliance exist and user owns
       const allianceEntry = await client.database.collection('alliances').findOne({
-        members: {
-          $elemMatch: {
-            $in: [uid]
-          }
-        }
+        members: { $elemMatch: { $in: [uid] } }
       })
       if (allianceEntry == null) return Promise.reject('User is not in an alliance.')
       if (allianceEntry.owner === uid) return Promise.reject('User currently owns alliance, you must disband to leave.')
@@ -1227,19 +1217,10 @@ module.exports = client => {
      * @param {Integer} amount
      */
     movePopulation: async (uid, originX, originY, targetX, targetY, amount) => {
-      // check if user exist
-      const userEntry = await client.database.collection('users').findOne({ uid: uid })
-      if (userEntry == null) return Promise.reject('User does not exist in database.')
+      // Developers note - i hate the seeding system also remove units (population from city and to units database)
 
-      const state = 'none'
-
-      // check if units are on tile
-
-      // check if units are in a city
-
-      // move units
-
-      // resolve
+      // Resolve
+      return Promise.resolve()
     },
 
     // loads movement
