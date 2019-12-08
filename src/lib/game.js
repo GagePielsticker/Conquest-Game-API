@@ -672,7 +672,12 @@ module.exports = client => {
       const userCities = await client.game.getUserCities(uid)
       userCities.forEach(async cityEntry => {
         // calculate generated food
-        const generatedFood = Math.ceil(cityEntry.population.farmers * 1.5)
+        const units = client.database.collection('units').find({ origin: { xPos: cityEntry.xPos, y: cityEntry.yPos }, type: 'farmers' }).toArray()
+        let generatedFood = 0
+        units.forEach(u => {
+          generatedFood += u.amount
+        })
+        generatedFood = Math.ceil(generatedFood * 1.5)
 
         // if they make more food then they can store, cap it
         if (cityEntry.resources.maxFood < cityEntry.resources.food + generatedFood) cityEntry.resources.food = cityEntry.resources.maxFood

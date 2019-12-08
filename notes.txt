@@ -80,3 +80,4 @@ changepopulation job
 calculatescoutetime
 scoutetile
 generateGold
+generateFood
