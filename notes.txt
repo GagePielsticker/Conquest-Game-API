@@ -1,5 +1,7 @@
 For units collection, only one city can have units on a given tile at a time, they can be of any type
 
+tell berry that any command that outputs the cities population will have to change to comply with new units standard
+
 units datbase
 {
   amount: 0
@@ -34,7 +36,6 @@ city database
     maxFood: 3000
   }
 }
-
 
 user database
 {

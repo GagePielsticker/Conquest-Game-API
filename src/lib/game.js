@@ -333,8 +333,8 @@ module.exports = client => {
       await client.database.collection('units').insertOne({
         type: 'unemployed',
         amount: Math.floor(Math.random() * 25) + 1,
-        xPos: xPos,
-        yPos: yPos,
+        xPos: userEntry.xPos,
+        yPos: userEntry.yPos,
         origin: {
           xPos: userEntry.xPos,
           yPos: userEntry.yPos
