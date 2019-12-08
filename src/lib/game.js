@@ -85,7 +85,7 @@ module.exports = client => {
         })
 
       if (!city && base.city === true) {
-        city = {
+        await client.database.collection('cities').insertOne({
           level: 1,
           createdAt: moment().unix(),
           xPos: xPos,
@@ -104,17 +104,44 @@ module.exports = client => {
             maxWood: 2000,
             food: Math.floor(Math.random() * 30) + 10,
             maxFood: 3000
-          },
-          population: {
-            military: Math.floor(Math.random() * 25) + 1,
-            miners: Math.floor(Math.random() * 25) + 1,
-            workers: Math.floor(Math.random() * 25) + 1,
-            farmers: Math.floor(Math.random() * 25) + 1,
-            unemployed: 0
           }
-        }
+        })
 
-        await client.database.collection('cities').insertOne(city)
+        await client.database.collection('units').insertOne({
+          type: 'military',
+          amount: Math.floor(Math.random() * 25) + 1,
+          origin: {
+            xPos: xPos,
+            yPos: yPos
+          }
+        })
+
+        await client.database.collection('units').insertOne({
+          type: 'miners',
+          amount: Math.floor(Math.random() * 25) + 1,
+          origin: {
+            xPos: xPos,
+            yPos: yPos
+          }
+        })
+
+        await client.database.collection('units').insertOne({
+          type: 'farmers',
+          amount: Math.floor(Math.random() * 25) + 1,
+          origin: {
+            xPos: xPos,
+            yPos: yPos
+          }
+        })
+
+        await client.database.collection('units').insertOne({
+          type: 'workers',
+          amount: Math.floor(Math.random() * 25) + 1,
+          origin: {
+            xPos: xPos,
+            yPos: yPos
+          }
+        })
       }
 
       base.city = city || null
