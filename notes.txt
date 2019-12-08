@@ -1,0 +1,50 @@
+For units collection, only one city can have units on a given tile at a time, they can be of any type
+
+units datbase
+{
+  amount: 0
+  type: 'miner, farmer, military, unemployed, workers'
+  xPos: current x xPos
+  yPos: current y yPos
+  origin: {
+    xPos: origin city's xPos
+    yPos: origin cities yPos
+  }
+}
+
+city database
+{
+  level: 0,
+  createdAt: unix time,
+  xPos: xPos,
+  yPos: yPos,
+  inStasis: false,
+  owner: null,
+  name: nameGenerator({ words: 2 }).dashed,
+  tradeRoutes: [],
+  buildings: [],
+  resources: {
+    stone: Math.floor(Math.random() * 11),
+    maxStone: 2000,
+    metal: Math.floor(Math.random() * 11),
+    maxMetal: 2000,
+    wood: Math.floor(Math.random() * 11),
+    maxWood: 2000,
+    food: Math.floor(Math.random() * 30) + 10,
+    maxFood: 3000
+  }
+}
+
+
+user database
+{
+  uid: uid,
+  createdAt: moment().unix(),
+  xPos: xPos,
+  yPos: yPos,
+  gold: 200,
+  empireName: null,
+  flagURL: null,
+  hasSettler: true,
+  scoutedTiles: []
+}
