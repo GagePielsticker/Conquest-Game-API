@@ -76,4 +76,7 @@ calculatelevelcost
 calculatesettlercost
 calculatemaxpopulation
 levelcity
-changepopulationjob
+changepopulation job 
+calculatescoutetime
+scoutetile
+generateGold

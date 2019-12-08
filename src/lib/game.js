@@ -646,14 +646,17 @@ module.exports = client => {
 
       const userCities = await client.game.getUserCities(uid)
 
+      // calculate user generated and add on
+      userCities.map(city => {
+        const units = client.database.collection('units').find({ origin: { xPos: city.xPos, y: city.yPos }, type: 'miners' }).toArray()
+        units.forEach(unit => {
+          userEntry.gold += unit.amount
+        })
+      })
+
       // write user to user database
       await client.database.collection('users').updateOne({ uid: uid }, {
-        $set:
-            {
-              gold: userEntry.gold +
-              userCities.map(x => x.population.miners)
-                .reduce((a, b) => a + b, 0)
-            }
+        $set: { gold: userEntry.gold }
       })
 
       // resolve once complete
@@ -787,12 +790,6 @@ module.exports = client => {
         const users = await client.database.collection('users').find({}).toArray()
         users.forEach(user => {
           tempList[user.uid] = user.gold
-        })
-      } else if (by === 'population') {
-        const cities = (await client.database.collection('cities').find({}).toArray()).filter(x => x.owner)
-        cities.forEach(city => {
-          if (!tempList[city.owner]) tempList[city.owner] = 0
-          tempList[city.owner] += city.population.reduce((a, b) => a + Object.values(b.population).reduce((c, d) => c + d, 0), 0)
         })
       }
       const sortedList = Object.keys(tempList).sort((a, b) => {
