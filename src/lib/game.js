@@ -513,10 +513,7 @@ module.exports = client => {
      * @param {String} target target work force you want to move original to
      * @param {Integer} amount amount to transition
      */
-    changePopulationJob: async (xPos, yPos, origin, target, amount) => {
-      // get tile
-      const mapEntry = await client.game.getTile(xPos, yPos)
-
+    changePopulationJob: async (uid, xPos, yPos, origin, target, amount) => {
       // uniformize job names
       origin = origin.toLowerCase()
       target = target.toLowerCase()
@@ -527,16 +524,49 @@ module.exports = client => {
       if (!possibleJobs.includes(origin)) return Promise.reject('Origin job does not exist.')
       if (!possibleJobs.includes(target)) return Promise.reject('Target job does not exist.')
 
+      // get tile and units
+      const originUnits = client.database.collection('units').findOne({ xPos: xPos, yPos: yPos, type: origin })
+      let targetUnits = client.database.collection('units').findOne({ xPos: xPos, yPos: yPos, type: target })
+
       // check to make sure there are no shenanigans going on here
       if (amount <= 0) return Promise.reject('You must enter a value greater than 0.')
-      if (mapEntry.city.population[origin] - amount < 0) return Promise.reject('You do not have enough people to do this.')
 
-      mapEntry.city.population[origin] -= amount
-      mapEntry.city.population[target] += amount
+      // check if units exist on tile
+      if (originUnits == null) return Promise.reject('No units of that type found on tile.')
+      if (targetUnits == null) {
+        targetUnits = {
+          type: target,
+          amount: 0,
+          xPos: xPos,
+          yPos: yPos,
+          origin: {
+            xPos: originUnits.origin.xPos,
+            yPos: originUnits.origin.yPos
+          }
+        }
+      }
 
-      // write to db
-      await client.database.collection('cities').updateOne({ xPos: xPos, yPos: yPos }, { $set: { population: mapEntry.city.population } })
+      // check to make sure user owns units
+      const city = await client.database.collection('cities').findOne({ xPos: originUnits.origin.xPos, yPos: originUnits.origin.yPos })
+      if (city.owner != uid) return Promise.reject('User does not own units.')
 
+      // Check to make sure theres enough on the tile
+      if (originUnits.amount - amount < 0) return Promise.reject('You do not have enough people to do this.')
+
+      // see if untis = 0
+      if (originUnits.amount - amount === 0) {
+        await client.database.collection('units').remove({ xPos: xPos, yPos: yPos, type: origin })
+      } else {
+        // remove original units
+        originUnits.amount -= amount
+        await client.database.collection('units').updateOne({ xPos: xPos, yPos: yPos, type: origin }, originUnits)
+
+        // add new units
+        targetUnits.amount += amount
+        await client.database.collection('units').updateOne({ xPos: xPos, yPos: yPos, type: target }, targetUnits, { upsert: true })
+      }
+
+      // resolve
       return Promise.resolve()
     },
 
